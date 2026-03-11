@@ -1,0 +1,2141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIS-C · FISCAL 1.0 · Multi-Empresas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0d6efd;
+            --primary-dark: #0a58ca;
+            --secondary: #198754;
+            --secondary-dark: #146c43;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #0dcaf0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --gray-light: #e9ecef;
+            --border: #dee2e6;
+            --sidebar-width: 280px;
+            --header-bg: #f8fafc;
+            --row-hover: #f1f5f9;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+            background: #f1f5f9;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR PROFISSIONAL */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(calc(var(--sidebar-width) * -1));
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo span {
+            background: var(--secondary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .developer {
+            font-size: 12px;
+            opacity: 0.6;
+            margin-top: 8px;
+        }
+
+        .menu-section {
+            padding: 20px 0;
+        }
+
+        .menu-title {
+            padding: 8px 20px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.5;
+            font-weight: 600;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            font-size: 14px;
+        }
+
+        .menu-item:hover {
+            background: rgba(255,255,255,0.05);
+            border-left-color: var(--secondary);
+        }
+
+        .menu-item.active {
+            background: rgba(25,135,84,0.1);
+            border-left-color: var(--secondary);
+        }
+
+        .badge {
+            background: var(--danger);
+            color: white;
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 11px;
+            margin-left: auto;
+        }
+
+        .empresas-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .empresa-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 13px;
+            border-left: 3px solid transparent;
+        }
+
+        .empresa-item:hover {
+            background: rgba(255,255,255,0.05);
+            border-left-color: var(--secondary);
+        }
+
+        .empresa-item.active {
+            background: rgba(25,135,84,0.1);
+            border-left-color: var(--secondary);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            transition: margin-left 0.3s ease;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f1f5f9;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* TOP BAR LIMPO */
+        .top-bar {
+            background: white;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .toggle-sidebar {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--gray);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .toggle-sidebar:hover {
+            background: var(--light);
+            color: var(--dark);
+        }
+
+        .page-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .empresa-info-fixa {
+            background: var(--light);
+            padding: 8px 16px;
+            border-radius: 30px;
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--dark);
+            cursor: pointer;
+            border: 1px solid var(--gray-light);
+            transition: 0.2s;
+        }
+
+        .empresa-info-fixa:hover {
+            background: white;
+            border-color: var(--primary);
+        }
+
+        /* FILTER BAR LIMPO */
+        .filter-bar {
+            background: white;
+            padding: 12px 24px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .filter-input-group {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+            min-width: 300px;
+        }
+
+        .filter-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+
+        .filter-input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--gray-light);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: var(--light);
+            border-color: var(--gray);
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* MESES BAR */
+        .meses-bar {
+            background: white;
+            padding: 8px 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--gray-light);
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .mes-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--gray-light);
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .mes-btn:hover {
+            background: var(--light);
+            border-color: var(--primary);
+        }
+
+        .mes-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* QUICK TOOLS */
+        .quick-tools {
+            background: white;
+            padding: 8px 24px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .tool-btn {
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: 0.2s;
+        }
+
+        .tool-btn:hover {
+            background: var(--light);
+            border-color: var(--primary);
+        }
+
+        .tool-btn.primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tool-btn.primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .tool-btn.success {
+            background: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
+        }
+
+        .tool-btn.danger {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        /* WORKSHEET - LIMPA E PROFISSIONAL */
+        .worksheet-container {
+            flex: 1;
+            overflow: auto;
+            background: white;
+            position: relative;
+        }
+
+        .excel-table {
+            border-collapse: collapse;
+            min-width: max-content;
+            font-size: 13px;
+            width: 100%;
+            background: white;
+        }
+
+        .excel-table th {
+            background: var(--header-bg);
+            color: var(--dark);
+            font-weight: 600;
+            padding: 12px 8px;
+            border: 1px solid var(--gray-light);
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        /* Colunas Fixas */
+        .excel-table th:first-child,
+        .excel-table th:nth-child(2) {
+            position: sticky;
+            left: 0;
+            background: #e9ecef;
+            z-index: 40;
+        }
+
+        .excel-table td:first-child,
+        .excel-table td:nth-child(2) {
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 20;
+            border-right: 1px solid var(--gray-light);
+        }
+
+        .excel-table td:first-child {
+            left: 0;
+        }
+
+        .excel-table td:nth-child(2) {
+            left: 140px;
+        }
+
+        .excel-table th:first-child {
+            left: 0;
+        }
+
+        .excel-table th:nth-child(2) {
+            left: 140px;
+        }
+
+        .th-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        .filter-col-btn {
+            background: transparent;
+            border: none;
+            color: var(--gray);
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .filter-col-btn:hover {
+            background: rgba(0,0,0,0.05);
+            color: var(--dark);
+        }
+
+        .excel-table td {
+            border: 1px solid var(--gray-light);
+            padding: 0;
+            min-width: 120px;
+            height: 38px;
+            background: white;
+        }
+
+        .excel-table td input, .excel-table td select {
+            width: 100%;
+            height: 100%;
+            border: none;
+            padding: 8px 10px;
+            background: transparent;
+            font-size: 12px;
+            outline: none;
+            font-family: 'SF Mono', 'Consolas', monospace;
+        }
+
+        .excel-table td input:focus, .excel-table td select:focus {
+            background: #fff9db;
+            outline: 2px solid var(--warning);
+            z-index: 50;
+        }
+
+        .excel-table td input.auto-preenchido {
+            background: #e8f5e9;
+        }
+
+        .excel-table td input.nao-encontrado {
+            background: #ffebee;
+        }
+
+        .excel-table td input.retencao-sim {
+            background: #e3f2fd;
+            font-weight: 500;
+        }
+
+        .excel-table tr:hover td {
+            background: #fafafa;
+        }
+
+        .excel-table tr:hover td:first-child,
+        .excel-table tr:hover td:nth-child(2) {
+            background: #f5f5f5;
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: transparent;
+            justify-content: center;
+        }
+
+        .btn-icon {
+            background: transparent;
+            color: var(--gray);
+            border: none;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: var(--light);
+            color: var(--dark);
+        }
+
+        .btn-icon.success:hover {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-icon.danger:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* STATUS BAR */
+        .status-bar {
+            background: white;
+            padding: 10px 24px;
+            display: flex;
+            gap: 24px;
+            font-size: 12px;
+            align-items: center;
+            border-top: 1px solid var(--gray-light);
+            color: var(--gray);
+        }
+
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-led {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--secondary);
+        }
+
+        .db-stats {
+            display: flex;
+            gap: 20px;
+            margin-left: auto;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        /* MODAIS */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            width: 500px;
+            max-width: 95vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-light);
+            background: white;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background: var(--light);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--gray-light);
+            color: var(--dark);
+        }
+
+        .btn-outline:hover {
+            background: var(--light);
+        }
+
+        /* FORM */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 13px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        /* DATABASE VIEWER */
+        .database-container {
+            padding: 20px;
+            overflow: auto;
+            height: 100%;
+            background: #f8f9fa;
+        }
+
+        .database-header {
+            background: white;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            border: 1px solid var(--gray-light);
+        }
+
+        .database-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .database-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .database-search {
+            display: flex;
+            gap: 8px;
+            min-width: 250px;
+        }
+
+        .database-search input {
+            flex: 1;
+            padding: 6px 12px;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .database-table {
+            background: white;
+            border-radius: 8px;
+            overflow: auto;
+            border: 1px solid var(--gray-light);
+        }
+
+        .db-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .db-table th {
+            background: var(--header-bg);
+            color: var(--dark);
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .db-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .db-table tr:hover {
+            background: var(--row-hover);
+        }
+
+        /* IMPORTAÇÃO */
+        .import-container {
+            padding: 20px;
+            overflow: auto;
+            height: 100%;
+            background: #f8f9fa;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .import-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--gray-light);
+        }
+
+        .import-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .import-area {
+            border: 2px dashed var(--gray-light);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 16px;
+            background: var(--light);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .import-area:hover {
+            border-color: var(--primary);
+            background: #e7f1ff;
+        }
+
+        .import-area.dragover {
+            border-color: var(--secondary);
+            background: #d1e7dd;
+        }
+
+        .import-log {
+            background: var(--light);
+            border-radius: 6px;
+            padding: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        /* SELETOR EMPRESA */
+        .empresa-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .empresa-card {
+            background: var(--light);
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .empresa-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .empresa-card.selected {
+            border-color: var(--secondary);
+            background: #d1e7dd;
+        }
+
+        .empresa-card h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: var(--dark);
+        }
+
+        .empresa-card p {
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                SIS-C <span>1.0</span>
+            </div>
+            <div class="developer">
+                Desenvolvido por Francisco Kauan
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">PRINCIPAL</div>
+            <div class="menu-item active" onclick="mudarAba('planilha')">
+                📊 Planilha Operacional
+            </div>
+            <div class="menu-item" onclick="mudarAba('database')">
+                🗄️ Banco de Dados
+                <span class="badge" id="dbBadge">0</span>
+            </div>
+            <div class="menu-item" onclick="mudarAba('importacao')">
+                📤 Importação
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">EMPRESAS</div>
+            <div id="empresasList" class="empresas-list"></div>
+            <div class="menu-item" onclick="abrirModalNovaEmpresa()">
+                ➕ Nova Empresa
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-title">FERRAMENTAS</div>
+            <div class="menu-item" onclick="abrirModalFornecedor()">
+                ➕ Adicionar Fornecedor
+            </div>
+            <div class="menu-item" onclick="backupDatabase()">
+                🔄 Backup
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content" id="mainContent">
+        <!-- TOP BAR -->
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <button class="toggle-sidebar" onclick="toggleSidebar()">☰</button>
+                <span class="page-title" id="pageTitle">📊 Planilha Operacional</span>
+            </div>
+            <div class="empresa-info-fixa" onclick="abrirSeletorEmpresa()" id="empresaInfoFixa">
+                <span id="empresaNomeDisplay">Carregando...</span>
+                <span id="empresaCnpjDisplay"></span>
+            </div>
+        </div>
+
+        <!-- FILTER BAR -->
+        <div class="filter-bar" id="filterBar">
+            <div class="filter-input-group">
+                <input type="text" class="filter-input" id="filterInput" placeholder="🔍 Filtrar por CNPJ, Razão Social ou Nº Doc..." onkeyup="filtrarPlanilha()">
+                <button class="filter-btn" onclick="limparFiltro()">✕ Limpar</button>
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn" onclick="filtrarRetencao('sim')" id="filterRetencaoBtn">
+                    💰 Com Retenção
+                </button>
+                <button class="filter-btn" onclick="filtrarRetencao('nao')" id="filterSemRetencaoBtn">
+                    💸 Sem Retenção
+                </button>
+                <button class="filter-btn" onclick="mostrarTodas()">📋 Todas</button>
+            </div>
+        </div>
+
+        <!-- MESES BAR -->
+        <div class="meses-bar" id="mesesBar"></div>
+
+        <!-- QUICK TOOLS -->
+        <div class="quick-tools" id="quickTools">
+            <button class="tool-btn primary" onclick="adicionarNovaLinha()">➕ Nova Nota</button>
+            <button class="tool-btn" onclick="salvarOperacional()">💾 Salvar</button>
+            <button class="tool-btn" onclick="exportarOperacional()">⬇️ Exportar</button>
+            <button class="tool-btn" onclick="calcularTotais()">💰 Totais</button>
+            <button class="tool-btn danger" onclick="limparOperacional()">🗑️ Limpar</button>
+        </div>
+
+        <!-- WORKSHEET -->
+        <div class="worksheet-container" id="worksheetContainer">
+            <table class="excel-table" id="excelTable">
+                <thead id="tableHeader"></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- DATABASE VIEWER -->
+        <div id="databaseViewer" class="hidden">
+            <div class="database-container">
+                <div class="database-header">
+                    <div class="database-title">🗄️ Banco de Dados de Fornecedores</div>
+                    <div class="database-actions">
+                        <div class="database-search">
+                            <input type="text" id="dbSearch" placeholder="🔍 Buscar por CNPJ ou razão..." onkeyup="filtrarFornecedores()">
+                        </div>
+                        <button class="btn btn-primary" onclick="abrirModalFornecedor()">➕ Novo</button>
+                        <button class="btn btn-success" onclick="exportarBD()">💾 Exportar</button>
+                    </div>
+                </div>
+                <div class="database-table">
+                    <table class="db-table">
+                        <thead>
+                            <tr>
+                                <th>CNPJ/CPF</th>
+                                <th>Razão Social</th>
+                                <th>UF</th>
+                                <th>Município</th>
+                                <th>Endereço</th>
+                                <th>Situação</th>
+                                <th>Acumulador</th>
+                                <th>CFOP</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fornecedoresBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- IMPORTAÇÃO VIEWER -->
+        <div id="importacaoView" class="hidden">
+            <div class="import-container">
+                <!-- Importação Banco de Dados -->
+                <div class="import-card">
+                    <div class="import-title">📊 Importar Banco de Dados</div>
+                    <div class="import-area" id="dbImportArea" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropDB(event)" onclick="document.getElementById('dbFileInput').click()">
+                        <div style="font-size: 40px; margin-bottom: 10px;">📂</div>
+                        <div style="font-weight: 500; margin-bottom: 4px;">Arraste ou clique para importar</div>
+                        <div style="font-size: 11px; color: var(--gray);">CSV com: CNPJ;Razão;UF;Município;Endereço;Situação;Acumulador;CFOP</div>
+                        <input type="file" id="dbFileInput" accept=".csv" style="display: none;" onchange="processarDBFile(this.files)">
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                        <button class="btn btn-primary" onclick="document.getElementById('dbFileInput').click()">Selecionar Arquivo</button>
+                        <button class="btn btn-outline" onclick="baixarModeloDB()">📥 Modelo</button>
+                    </div>
+                    <div class="import-log" id="dbImportLog">
+                        <div class="log-entry">📌 Pronto para importar</div>
+                    </div>
+                </div>
+
+                <!-- Importação Operacional -->
+                <div class="import-card">
+                    <div class="import-title">📋 Importar Planilha Operacional</div>
+                    <div class="import-area" id="opImportArea" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropOP(event)" onclick="document.getElementById('opFileInput').click()">
+                        <div style="font-size: 40px; margin-bottom: 10px;">📊</div>
+                        <div style="font-weight: 500; margin-bottom: 4px;">Arraste ou clique para importar</div>
+                        <div style="font-size: 11px; color: var(--gray);">CSV com todas as 25 colunas da planilha</div>
+                        <input type="file" id="opFileInput" accept=".csv" style="display: none;" onchange="processarOPFile(this.files)">
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                        <button class="btn btn-primary" onclick="document.getElementById('opFileInput').click()">Selecionar Arquivo</button>
+                        <button class="btn btn-outline" onclick="baixarModeloOP()">📥 Modelo</button>
+                    </div>
+                    <div class="import-log" id="opImportLog">
+                        <div class="log-entry">📌 Pronto para importar</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATUS BAR -->
+        <div class="status-bar">
+            <div class="status-info">
+                <div class="status-led"></div>
+                <span class="status-text" id="statusMessage">Sistema pronto</span>
+            </div>
+            <div class="db-stats">
+                <div class="stat-item">
+                    <span>📊 Registros:</span>
+                    <span class="stat-value" id="registrosMes">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>🗄️ Fornecedores:</span>
+                    <span class="stat-value" id="totalFornecedores">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>💰 Total R$:</span>
+                    <span class="stat-value" id="totalValor">0,00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMAÇÃO FORNECEDOR -->
+    <div id="modalConfirmarFornecedor" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Fornecedor Não Encontrado</h2>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px;">Deseja adicionar este fornecedor ao banco de dados?</p>
+                <div style="background: var(--light); padding: 12px; border-radius: 6px;">
+                    <div><strong>CNPJ:</strong> <span id="modalCnpj"></span></div>
+                    <div><strong>Razão Social:</strong> <span id="modalRazao"></span></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="fecharModalConfirmar()">Não</button>
+                <button class="btn btn-success" onclick="salvarFornecedorDoModal()">Sim, Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NOVA EMPRESA -->
+    <div id="modalNovaEmpresa" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Nova Empresa</h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nome da Empresa *</label>
+                    <input type="text" id="novaEmpresaNome" placeholder="Ex: EMPRESA EXEMPLO LTDA">
+                </div>
+                <div class="form-group">
+                    <label>CNPJ *</label>
+                    <input type="text" id="novaEmpresaCnpj" placeholder="00.000.000/0001-99">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="fecharModalNovaEmpresa()">Cancelar</button>
+                <button class="btn btn-success" onclick="salvarNovaEmpresa()">Criar Empresa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SELETOR DE EMPRESA -->
+    <div id="modalSeletorEmpresa" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Selecione a Empresa</h2>
+            </div>
+            <div class="modal-body">
+                <div id="empresaSelectorList" class="empresa-selector"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="fecharModalSeletorEmpresa()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NOVO FORNECEDOR -->
+    <div id="modalFornecedor" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Novo Fornecedor</h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>CNPJ/CPF *</label>
+                    <input type="text" id="fCnpj" placeholder="00.000.000/0001-99">
+                </div>
+                <div class="form-group">
+                    <label>Razão Social *</label>
+                    <input type="text" id="fRazao" placeholder="NOME DO FORNECEDOR">
+                </div>
+                <div class="form-group">
+                    <label>UF *</label>
+                    <input type="text" id="fUf" maxlength="2" placeholder="SP">
+                </div>
+                <div class="form-group">
+                    <label>Município *</label>
+                    <input type="text" id="fMunicipio" placeholder="SÃO PAULO">
+                </div>
+                <div class="form-group">
+                    <label>Endereço *</label>
+                    <input type="text" id="fEndereco" placeholder="RUA EXEMPLO, 123">
+                </div>
+                <div class="form-group">
+                    <label>Situação *</label>
+                    <select id="fSituacao">
+                        <option value="0">0 - Regular</option>
+                        <option value="2">2 - Cancelada</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Acumulador *</label>
+                    <input type="text" id="fAcumulador" value="101">
+                </div>
+                <div class="form-group">
+                    <label>CFOP *</label>
+                    <input type="text" id="fCfop" value="1933">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="fecharModalFornecedor()">Cancelar</button>
+                <button class="btn btn-success" onclick="salvarFornecedorManual()">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== BANCO DE DADOS MULTI-EMPRESA ====================
+        class DatabaseManager {
+            constructor() {
+                this.empresas = [];
+                this.fornecedores = [];
+                this.operacional = new Map();
+                this.meses = this.gerarMeses();
+                this.empresaAtiva = null;
+                this.carregarDados();
+                this.inicializarExemplos();
+            }
+
+            gerarMeses() {
+                const meses = [];
+                const anos = ['2026'];
+                const nomesMeses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 
+                                   'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+                for (let ano of anos) {
+                    for (let mes of nomesMeses) {
+                        meses.push(`${mes}/${ano}`);
+                    }
+                }
+                return meses;
+            }
+
+            carregarDados() {
+                // Carregar empresas
+                const empresasSalvas = localStorage.getItem('sisC_empresas');
+                this.empresas = empresasSalvas ? JSON.parse(empresasSalvas) : [];
+
+                // Carregar fornecedores
+                const fornecedoresSalvos = localStorage.getItem('sisC_fornecedores');
+                this.fornecedores = fornecedoresSalvos ? JSON.parse(fornecedoresSalvos) : [];
+
+                // Carregar operacional por empresa_mes
+                for (let empresa of this.empresas) {
+                    for (let mes of this.meses) {
+                        const key = `${empresa.id}_${mes}`;
+                        const saved = localStorage.getItem(`sisC_${key}`);
+                        if (saved) {
+                            this.operacional.set(key, JSON.parse(saved));
+                        }
+                    }
+                }
+            }
+
+            inicializarExemplos() {
+                // Criar empresa padrão
+                if (this.empresas.length === 0) {
+                    this.empresas.push({
+                        id: 'emp_1',
+                        nome: 'EMPRESA PADRÃO LTDA',
+                        cnpj: '12.345.678/0001-99'
+                    });
+                }
+
+                // Fornecedores padrão
+                if (this.fornecedores.length === 0) {
+                    this.fornecedores = [
+                        { id: 1, cnpj: '03299326000150', razao: 'JOSE FIRMINO DE COUTO - EPP', uf: 'SP', municipio: 'OSASCO', endereco: 'VILA MENCK, 123', situacao: '0', acumulador: '101', cfop: '1933' },
+                        { id: 2, cnpj: '03706177000104', razao: 'ECONSTRUMARKET', uf: 'SP', municipio: 'SÃO PAULO', endereco: 'RUA ATILIO PIFFER, 456', situacao: '0', acumulador: '104', cfop: '1933' },
+                        { id: 3, cnpj: '09151039000184', razao: 'J C GARCIA', uf: 'SP', municipio: 'CARAGUATATUBA', endereco: 'RUA AMERICO TIMOTEO DO ROSARIO, 789', situacao: '0', acumulador: '115', cfop: '1933' }
+                    ];
+                }
+
+                // Definir empresa ativa
+                if (!this.empresaAtiva && this.empresas.length > 0) {
+                    this.empresaAtiva = this.empresas[0];
+                }
+            }
+
+            getKey(mes) {
+                return `${this.empresaAtiva.id}_${mes}`;
+            }
+
+            getLinhasPorMes(mes) {
+                const key = this.getKey(mes);
+                return this.operacional.get(key) || [];
+            }
+
+            atualizarLinhasPorMes(mes, linhas) {
+                const key = this.getKey(mes);
+                this.operacional.set(key, linhas);
+                this.salvarOperacional(mes);
+            }
+
+            salvarOperacional(mes) {
+                const key = this.getKey(mes);
+                localStorage.setItem(`sisC_${key}`, JSON.stringify(this.operacional.get(key) || []));
+            }
+
+            salvarTudo() {
+                localStorage.setItem('sisC_empresas', JSON.stringify(this.empresas));
+                localStorage.setItem('sisC_fornecedores', JSON.stringify(this.fornecedores));
+                
+                for (let [key, linhas] of this.operacional) {
+                    localStorage.setItem(`sisC_${key}`, JSON.stringify(linhas));
+                }
+            }
+
+            buscarFornecedor(cnpj) {
+                const cnpjLimpo = cnpj.replace(/[^\d]/g, '');
+                return this.fornecedores.find(f => f.cnpj === cnpjLimpo);
+            }
+
+            adicionarFornecedor(fornecedor) {
+                fornecedor.id = Date.now();
+                this.fornecedores.push(fornecedor);
+                this.salvarTudo();
+                return fornecedor;
+            }
+
+            importarFornecedores(novosFornecedores) {
+                let count = 0;
+                for (let f of novosFornecedores) {
+                    if (f.cnpj && f.razao) {
+                        f.id = Date.now() + count;
+                        this.fornecedores.push(f);
+                        count++;
+                    }
+                }
+                this.salvarTudo();
+                return count;
+            }
+
+            removerFornecedor(id) {
+                this.fornecedores = this.fornecedores.filter(f => f.id !== id);
+                this.salvarTudo();
+            }
+
+            importarLinhas(mes, novasLinhas) {
+                const linhas = this.getLinhasPorMes(mes);
+                let count = 0;
+                for (let linha of novasLinhas) {
+                    if (linha.cnpj) {
+                        linha.id = Date.now() + count;
+                        linhas.push(linha);
+                        count++;
+                    }
+                }
+                this.atualizarLinhasPorMes(mes, linhas);
+                return count;
+            }
+
+            limparOperacional(mes) {
+                this.operacional.set(this.getKey(mes), []);
+                this.salvarOperacional(mes);
+            }
+
+            adicionarEmpresa(nome, cnpj) {
+                const empresa = {
+                    id: `emp_${Date.now()}`,
+                    nome: nome,
+                    cnpj: cnpj
+                };
+                this.empresas.push(empresa);
+                this.salvarTudo();
+                return empresa;
+            }
+
+            mudarEmpresa(empresaId) {
+                const empresa = this.empresas.find(e => e.id === empresaId);
+                if (empresa) {
+                    this.empresaAtiva = empresa;
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        // ==================== INSTÂNCIA GLOBAL ====================
+        const db = new DatabaseManager();
+
+        // ==================== ESTADO DA INTERFACE ====================
+        let currentMes = 'JANEIRO/2026';
+        let currentLinhas = [];
+        let currentAba = 'planilha';
+        let filtroAtivo = '';
+        let fornecedorPendente = null;
+
+        // ==================== CABEÇALHO DA PLANILHA ====================
+        const colunas = [
+            { campo: 'cnpj', label: 'CNPJ/CPF' },
+            { campo: 'razao', label: 'Razão Social' },
+            { campo: 'uf', label: 'UF' },
+            { campo: 'municipio', label: 'Município' },
+            { campo: 'endereco', label: 'Endereço' },
+            { campo: 'nDoc', label: 'Nº Documento' },
+            { campo: 'serie', label: 'Série' },
+            { campo: 'data', label: 'Data' },
+            { campo: 'situacao', label: 'Situação' },
+            { campo: 'acumulador', label: 'Acumulador' },
+            { campo: 'cfop', label: 'CFOP' },
+            { campo: 'vlrServicos', label: 'Vlr Serviços' },
+            { campo: 'vlrDescontos', label: 'Vlr Descontos' },
+            { campo: 'vlrContabil', label: 'Vlr Contábil' },
+            { campo: 'baseCalculo', label: 'Base Cálculo' },
+            { campo: 'aliquotaISS', label: 'Alíquota ISS' },
+            { campo: 'vlrISSNormal', label: 'Vlr ISS Normal' },
+            { campo: 'vlrISSRetido', label: 'Vlr ISS Retido' },
+            { campo: 'vlrIRRF', label: 'Vlr IRRF' },
+            { campo: 'vlrPIS', label: 'Vlr PIS' },
+            { campo: 'vlrCOFINS', label: 'Vlr COFINS' },
+            { campo: 'vlrCSLL', label: 'Vlr CSLL' },
+            { campo: 'vlrCRF', label: 'Vlr CRF' },
+            { campo: 'vlrINSS', label: 'Vlr INSS' },
+            { campo: 'retencao', label: 'Retenção?' },
+            { campo: 'acoes', label: 'Ações' }
+        ];
+
+        // ==================== INICIALIZAÇÃO ====================
+        function inicializarSistema() {
+            renderEmpresasList();
+            
+            if (db.empresas.length > 0 && !db.empresaAtiva) {
+                db.empresaAtiva = db.empresas[0];
+            }
+            
+            atualizarDisplayEmpresa();
+            
+            // Perguntar mês
+            setTimeout(() => {
+                const mesSelecionado = prompt(`Selecione o mês (ex: ${db.meses[0]}):`, db.meses[0]);
+                if (mesSelecionado && db.meses.includes(mesSelecionado)) {
+                    currentMes = mesSelecionado;
+                }
+                carregarTudo();
+            }, 100);
+        }
+
+        function carregarTudo() {
+            renderCabecalho();
+            renderMeses();
+            renderPlanilha();
+            renderFornecedores();
+            atualizarStatus();
+        }
+
+        // ==================== RENDERIZAÇÃO ====================
+        function renderEmpresasList() {
+            const container = document.getElementById('empresasList');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            db.empresas.forEach(emp => {
+                const div = document.createElement('div');
+                div.className = `empresa-item ${emp.id === db.empresaAtiva?.id ? 'active' : ''}`;
+                div.onclick = () => selecionarEmpresa(emp.id);
+                div.innerHTML = `🏢 ${emp.nome}`;
+                container.appendChild(div);
+            });
+        }
+
+        function renderMeses() {
+            const container = document.getElementById('mesesBar');
+            container.innerHTML = '';
+            
+            db.meses.forEach(mes => {
+                const btn = document.createElement('button');
+                btn.className = `mes-btn ${mes === currentMes ? 'active' : ''}`;
+                btn.textContent = mes;
+                btn.onclick = () => {
+                    currentMes = mes;
+                    renderMeses();
+                    renderPlanilha();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function renderCabecalho() {
+            const thead = document.getElementById('tableHeader');
+            let html = '<tr>';
+            
+            colunas.forEach(col => {
+                if (col.campo === 'acoes') {
+                    html += `<th>Ações</th>`;
+                } else {
+                    html += `
+                        <th>
+                            <div class="th-content">
+                                ${col.label}
+                                <button class="filter-col-btn" onclick="abrirFiltroColuna('${col.campo}')" title="Filtrar">🔍</button>
+                            </div>
+                        </th>
+                    `;
+                }
+            });
+            
+            html += '</tr>';
+            thead.innerHTML = html;
+        }
+
+        function renderPlanilha() {
+            currentLinhas = db.getLinhasPorMes(currentMes);
+            
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            const linhasParaRender = aplicarFiltros();
+
+            linhasParaRender.forEach((linha) => {
+                const tr = document.createElement('tr');
+                tr.dataset.id = linha.id;
+                
+                colunas.forEach(col => {
+                    if (col.campo === 'acoes') {
+                        const td = document.createElement('td');
+                        td.className = 'actions-cell';
+                        td.innerHTML = `
+                            <button class="btn-icon success" onclick="duplicarLinha('${linha.id}')" title="Duplicar">📋</button>
+                            <button class="btn-icon danger" onclick="removerLinha('${linha.id}')" title="Remover">🗑️</button>
+                        `;
+                        tr.appendChild(td);
+                    } else if (col.campo === 'situacao') {
+                        const td = document.createElement('td');
+                        const select = document.createElement('select');
+                        select.innerHTML = `
+                            <option value="0" ${linha.situacao === '0' ? 'selected' : ''}>0 - Regular</option>
+                            <option value="2" ${linha.situacao === '2' ? 'selected' : ''}>2 - Cancelada</option>
+                        `;
+                        select.onchange = (e) => {
+                            linha.situacao = e.target.value;
+                            db.atualizarLinhasPorMes(currentMes, currentLinhas);
+                            atualizarStatus();
+                        };
+                        td.appendChild(select);
+                        tr.appendChild(td);
+                    } else if (col.campo === 'retencao') {
+                        const td = document.createElement('td');
+                        const select = document.createElement('select');
+                        select.innerHTML = `
+                            <option value="nao" ${linha.retencao === 'nao' || !linha.retencao ? 'selected' : ''}>Não</option>
+                            <option value="sim" ${linha.retencao === 'sim' ? 'selected' : ''}>Sim</option>
+                        `;
+                        select.onchange = (e) => {
+                            linha.retencao = e.target.value;
+                            db.atualizarLinhasPorMes(currentMes, currentLinhas);
+                            atualizarStatus();
+                        };
+                        td.appendChild(select);
+                        tr.appendChild(td);
+                    } else {
+                        const td = document.createElement('td');
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.value = linha[col.campo] || '';
+                        input.placeholder = col.campo;
+                        
+                        if (col.campo === 'cnpj') {
+                            const fornecedor = db.buscarFornecedor(linha[col.campo]);
+                            if (fornecedor) {
+                                input.classList.add('auto-preenchido');
+                            } else if (linha[col.campo] && linha[col.campo].length >= 14) {
+                                input.classList.add('nao-encontrado');
+                            }
+                        }
+                        
+                        input.onchange = (e) => {
+                            linha[col.campo] = e.target.value;
+                            if (col.campo === 'cnpj') {
+                                verificarFornecedor(linha, e.target.value);
+                            }
+                            db.atualizarLinhasPorMes(currentMes, currentLinhas);
+                            atualizarStatus();
+                        };
+                        
+                        td.appendChild(input);
+                        tr.appendChild(td);
+                    }
+                });
+
+                tbody.appendChild(tr);
+            });
+
+            // Linha para adicionar
+            const trAdd = document.createElement('tr');
+            const tdAdd = document.createElement('td');
+            tdAdd.colSpan = colunas.length;
+            tdAdd.style.textAlign = 'center';
+            tdAdd.style.padding = '12px';
+            tdAdd.style.background = '#f8fafc';
+            tdAdd.innerHTML = '<button class="btn btn-primary" style="padding: 8px 24px;" onclick="adicionarNovaLinha()">➕ Adicionar Nova Nota</button>';
+            trAdd.appendChild(tdAdd);
+            tbody.appendChild(trAdd);
+
+            atualizarStatus();
+        }
+
+        function renderFornecedores() {
+            const tbody = document.getElementById('fornecedoresBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            db.fornecedores.forEach(fornecedor => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${fornecedor.cnpj}</td>
+                    <td>${fornecedor.razao}</td>
+                    <td>${fornecedor.uf}</td>
+                    <td>${fornecedor.municipio}</td>
+                    <td>${fornecedor.endereco}</td>
+                    <td>${fornecedor.situacao === '0' ? 'Regular' : 'Cancelada'}</td>
+                    <td>${fornecedor.acumulador}</td>
+                    <td>${fornecedor.cfop}</td>
+                    <td>
+                        <button class="btn-icon danger" onclick="removerFornecedor(${fornecedor.id})" title="Remover">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('dbBadge').textContent = db.fornecedores.length;
+            document.getElementById('totalFornecedores').textContent = db.fornecedores.length;
+        }
+
+        // ==================== FILTROS ====================
+        function aplicarFiltros() {
+            let linhas = currentLinhas;
+            const termo = document.getElementById('filterInput')?.value.toLowerCase() || '';
+            
+            if (termo) {
+                linhas = linhas.filter(l => 
+                    (l.cnpj && l.cnpj.includes(termo)) ||
+                    (l.razao && l.razao.toLowerCase().includes(termo)) ||
+                    (l.nDoc && l.nDoc.toLowerCase().includes(termo))
+                );
+            }
+            
+            if (filtroAtivo === 'retencao_sim') {
+                linhas = linhas.filter(l => l.retencao === 'sim');
+            } else if (filtroAtivo === 'retencao_nao') {
+                linhas = linhas.filter(l => l.retencao === 'nao' || !l.retencao);
+            }
+            
+            return linhas;
+        }
+
+        window.filtrarPlanilha = function() {
+            renderPlanilha();
+        };
+
+        window.filtrarRetencao = function(tipo) {
+            filtroAtivo = tipo === 'sim' ? 'retencao_sim' : 'retencao_nao';
+            renderPlanilha();
+            
+            document.getElementById('filterRetencaoBtn').classList.toggle('active', tipo === 'sim');
+            document.getElementById('filterSemRetencaoBtn').classList.toggle('active', tipo === 'nao');
+        };
+
+        window.mostrarTodas = function() {
+            filtroAtivo = '';
+            document.getElementById('filterInput').value = '';
+            renderPlanilha();
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        };
+
+        window.limparFiltro = function() {
+            mostrarTodas();
+        };
+
+        window.abrirFiltroColuna = function(campo) {
+            const valor = prompt(`Digite o valor para filtrar:`);
+            if (valor) {
+                // Implementação simples de filtro por coluna
+                filtroAtivo = 'coluna';
+                // Seria necessário implementar a lógica específica
+                alert(`Filtro por ${campo}: ${valor}`);
+            }
+        };
+
+        // ==================== VERIFICAÇÃO DE FORNECEDOR ====================
+        function verificarFornecedor(linha, cnpj) {
+            const cnpjLimpo = cnpj.replace(/[^\d]/g, '');
+            if (cnpjLimpo.length < 14) return;
+            
+            const fornecedor = db.buscarFornecedor(cnpjLimpo);
+            
+            if (fornecedor) {
+                linha.razao = fornecedor.razao;
+                linha.uf = fornecedor.uf;
+                linha.municipio = fornecedor.municipio;
+                linha.endereco = fornecedor.endereco;
+                linha.situacao = fornecedor.situacao;
+                linha.acumulador = fornecedor.acumulador;
+                linha.cfop = fornecedor.cfop;
+                
+                db.atualizarLinhasPorMes(currentMes, currentLinhas);
+                renderPlanilha();
+                atualizarStatus(`Auto-preenchido: ${fornecedor.razao}`);
+            } else {
+                fornecedorPendente = {
+                    cnpj: cnpjLimpo,
+                    razao: linha.razao || 'NOVO FORNECEDOR',
+                    uf: linha.uf || 'SP',
+                    municipio: linha.municipio || '',
+                    endereco: linha.endereco || '',
+                    situacao: '0',
+                    acumulador: linha.acumulador || '101',
+                    cfop: linha.cfop || '1933'
+                };
+                
+                document.getElementById('modalCnpj').textContent = cnpjLimpo;
+                document.getElementById('modalRazao').textContent = fornecedorPendente.razao;
+                document.getElementById('modalConfirmarFornecedor').classList.remove('hidden');
+            }
+        }
+
+        window.salvarFornecedorDoModal = function() {
+            if (fornecedorPendente) {
+                db.adicionarFornecedor(fornecedorPendente);
+                fecharModalConfirmar();
+                
+                const linha = currentLinhas.find(l => l.cnpj.replace(/[^\d]/g, '') === fornecedorPendente.cnpj);
+                if (linha) {
+                    verificarFornecedor(linha, fornecedorPendente.cnpj);
+                }
+                
+                renderFornecedores();
+                atualizarStatus(`Fornecedor adicionado: ${fornecedorPendente.razao}`);
+            }
+        };
+
+        window.fecharModalConfirmar = function() {
+            document.getElementById('modalConfirmarFornecedor').classList.add('hidden');
+            fornecedorPendente = null;
+        };
+
+        // ==================== MANIPULAÇÃO DE LINHAS ====================
+        window.adicionarNovaLinha = function() {
+            const novaLinha = {
+                id: Date.now() + Math.random(),
+                cnpj: '', razao: '', uf: '', municipio: '', endereco: '',
+                nDoc: '', serie: '', data: new Date().toLocaleDateString('pt-BR'),
+                situacao: '0', acumulador: '', cfop: '',
+                vlrServicos: '0,00', vlrDescontos: '0,00', vlrContabil: '0,00',
+                baseCalculo: '0,00', aliquotaISS: '5,00', vlrISSNormal: '0,00',
+                vlrISSRetido: '0,00', vlrIRRF: '0,00', vlrPIS: '0,00',
+                vlrCOFINS: '0,00', vlrCSLL: '0,00', vlrCRF: '0,00', vlrINSS: '0,00',
+                retencao: 'nao'
+            };
+            
+            currentLinhas.push(novaLinha);
+            db.atualizarLinhasPorMes(currentMes, currentLinhas);
+            renderPlanilha();
+            atualizarStatus('Nova nota adicionada');
+        };
+
+        window.duplicarLinha = function(id) {
+            const index = currentLinhas.findIndex(l => l.id == id);
+            if (index !== -1) {
+                const linha = { ...currentLinhas[index], id: Date.now() + Math.random() };
+                currentLinhas.splice(index + 1, 0, linha);
+                db.atualizarLinhasPorMes(currentMes, currentLinhas);
+                renderPlanilha();
+                atualizarStatus('Linha duplicada');
+            }
+        };
+
+        window.removerLinha = function(id) {
+            if (confirm('Remover esta linha?')) {
+                currentLinhas = currentLinhas.filter(l => l.id != id);
+                db.atualizarLinhasPorMes(currentMes, currentLinhas);
+                renderPlanilha();
+                atualizarStatus('Linha removida');
+            }
+        };
+
+        window.removerFornecedor = function(id) {
+            if (confirm('Remover este fornecedor?')) {
+                db.removerFornecedor(id);
+                renderFornecedores();
+                atualizarStatus('Fornecedor removido');
+            }
+        };
+
+        // ==================== FUNÇÕES PRINCIPAIS ====================
+        window.salvarOperacional = function() {
+            db.salvarOperacional(currentMes);
+            atualizarStatus('Operacional salvo');
+        };
+
+        window.limparOperacional = function() {
+            if (confirm('Limpar todos os dados do mês atual?')) {
+                db.limparOperacional(currentMes);
+                currentLinhas = [];
+                renderPlanilha();
+                atualizarStatus('Operacional limpo');
+            }
+        };
+
+        window.calcularTotais = function() {
+            let total = 0;
+            let comRetencao = 0;
+            
+            currentLinhas.forEach(l => {
+                total += parseFloat(l.vlrServicos?.replace(',', '.') || '0');
+                if (l.retencao === 'sim') comRetencao++;
+            });
+            
+            alert(`📊 RESUMO DO MÊS:\n\n` +
+                  `Total de Serviços: R$ ${total.toFixed(2).replace('.', ',')}\n` +
+                  `Notas com Retenção: ${comRetencao}\n` +
+                  `Total de Notas: ${currentLinhas.length}`);
+        };
+
+        window.exportarOperacional = function() {
+            if (currentLinhas.length === 0) {
+                alert('Nenhum dado para exportar');
+                return;
+            }
+
+            const headers = colunas.filter(c => c.campo !== 'acoes').map(c => c.label);
+            const csvRows = [headers.join(';')];
+
+            for (const linha of currentLinhas) {
+                const values = colunas.filter(c => c.campo !== 'acoes').map(c => linha[c.campo] || '');
+                csvRows.push(values.map(v => `"${v}"`).join(';'));
+            }
+
+            const blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `operacional_${currentMes.replace('/', '_')}.csv`;
+            link.click();
+            atualizarStatus('Arquivo exportado');
+        };
+
+        window.exportarBD = function() {
+            const headers = ['CNPJ', 'Razão Social', 'UF', 'Município', 'Endereço', 'Situação', 'Acumulador', 'CFOP'];
+            const csvRows = [headers.join(';')];
+
+            for (const f of db.fornecedores) {
+                const values = [f.cnpj, f.razao, f.uf, f.municipio, f.endereco, 
+                              f.situacao === '0' ? 'Regular' : 'Cancelada', f.acumulador, f.cfop];
+                csvRows.push(values.map(v => `"${v}"`).join(';'));
+            }
+
+            const blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'fornecedores.csv';
+            link.click();
+            atualizarStatus('Banco exportado');
+        };
+
+        window.backupDatabase = function() {
+            db.salvarTudo();
+            atualizarStatus('Backup realizado');
+        };
+
+        window.filtrarFornecedores = function() {
+            const termo = document.getElementById('dbSearch').value.toLowerCase();
+            const tbody = document.getElementById('fornecedoresBody');
+            
+            const filtrados = db.fornecedores.filter(f => 
+                f.cnpj.includes(termo) || f.razao.toLowerCase().includes(termo)
+            );
+
+            tbody.innerHTML = '';
+            filtrados.forEach(f => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${f.cnpj}</td>
+                    <td>${f.razao}</td>
+                    <td>${f.uf}</td>
+                    <td>${f.municipio}</td>
+                    <td>${f.endereco}</td>
+                    <td>${f.situacao === '0' ? 'Regular' : 'Cancelada'}</td>
+                    <td>${f.acumulador}</td>
+                    <td>${f.cfop}</td>
+                    <td>
+                        <button class="btn-icon danger" onclick="removerFornecedor(${f.id})">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        // ==================== IMPORTAÇÃO ====================
+        window.dragOver = function(e) {
+            e.preventDefault();
+            e.target.classList.add('dragover');
+        };
+
+        window.dragLeave = function(e) {
+            e.preventDefault();
+            e.target.classList.remove('dragover');
+        };
+
+        window.dropDB = function(e) {
+            e.preventDefault();
+            e.target.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length) processarDBFile(files);
+        };
+
+        window.dropOP = function(e) {
+            e.preventDefault();
+            e.target.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length) processarOPFile(files);
+        };
+
+        window.processarDBFile = function(files) {
+            const log = document.getElementById('dbImportLog');
+            log.innerHTML += `<div class="log-entry">📂 Processando: ${files[0].name}</div>`;
+            
+            // Simular processamento
+            setTimeout(() => {
+                const novosFornecedores = [
+                    { cnpj: '12345678000199', razao: 'FORNECEDOR EXEMPLO 1', uf: 'SP', municipio: 'SÃO PAULO', endereco: 'RUA EXEMPLO, 123', situacao: '0', acumulador: '101', cfop: '1933' },
+                    { cnpj: '98765432000188', razao: 'FORNECEDOR EXEMPLO 2', uf: 'RJ', municipio: 'RIO DE JANEIRO', endereco: 'AVENIDA EXEMPLO, 456', situacao: '0', acumulador: '102', cfop: '2933' }
+                ];
+                
+                const count = db.importarFornecedores(novosFornecedores);
+                log.innerHTML += `<div class="log-entry">✅ ${count} fornecedores importados</div>`;
+                renderFornecedores();
+                atualizarStatus(`${count} fornecedores importados`);
+            }, 1000);
+        };
+
+        window.processarOPFile = function(files) {
+            const log = document.getElementById('opImportLog');
+            log.innerHTML += `<div class="log-entry">📂 Processando: ${files[0].name}</div>`;
+            
+            setTimeout(() => {
+                const novasLinhas = [
+                    criarNotaExemplo('03299326000150', '999991', '15/03/2026', '1500,00'),
+                    criarNotaExemplo('03706177000104', '999992', '16/03/2026', '2800,00')
+                ];
+                
+                const count = db.importarLinhas(currentMes, novasLinhas);
+                log.innerHTML += `<div class="log-entry">✅ ${count} notas importadas</div>`;
+                renderPlanilha();
+                atualizarStatus(`${count} notas importadas`);
+            }, 1000);
+        };
+
+        function criarNotaExemplo(cnpj, nDoc, data, valor) {
+            const f = db.buscarFornecedor(cnpj);
+            return {
+                id: Date.now() + Math.random(),
+                cnpj: cnpj,
+                razao: f ? f.razao : '',
+                uf: f ? f.uf : '',
+                municipio: f ? f.municipio : '',
+                endereco: f ? f.endereco : '',
+                nDoc: nDoc,
+                serie: '1',
+                data: data,
+                situacao: '0',
+                acumulador: f ? f.acumulador : '',
+                cfop: f ? f.cfop : '',
+                vlrServicos: valor,
+                vlrDescontos: '0,00',
+                vlrContabil: valor,
+                baseCalculo: '0,00',
+                aliquotaISS: '5,00',
+                vlrISSNormal: calcularPercentual(valor, 5),
+                vlrISSRetido: '0,00',
+                vlrIRRF: '0,00',
+                vlrPIS: calcularPercentual(valor, 0.65),
+                vlrCOFINS: calcularPercentual(valor, 3),
+                vlrCSLL: calcularPercentual(valor, 1),
+                vlrCRF: '0,00',
+                vlrINSS: calcularPercentual(valor, 11),
+                retencao: 'nao'
+            };
+        }
+
+        function calcularPercentual(valor, percentual) {
+            const num = parseFloat(valor.replace(',', '.'));
+            return (num * percentual / 100).toFixed(2).replace('.', ',');
+        }
+
+        window.baixarModeloDB = function() {
+            const headers = ['CNPJ', 'Razão Social', 'UF', 'Município', 'Endereço', 'Situação', 'Acumulador', 'CFOP'];
+            const exemplo = ['00.000.000/0001-99', 'EMPRESA EXEMPLO LTDA', 'SP', 'SÃO PAULO', 'RUA EXEMPLO, 123', '0', '101', '1933'];
+            
+            const csv = [headers.join(';'), exemplo.join(';')].join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'modelo_fornecedores.csv';
+            link.click();
+        };
+
+        window.baixarModeloOP = function() {
+            const headers = colunas.filter(c => c.campo !== 'acoes').map(c => c.label);
+            const exemplo = Array(headers.length).fill('exemplo');
+            
+            const csv = [headers.join(';'), exemplo.join(';')].join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'modelo_operacional.csv';
+            link.click();
+        };
+
+        // ==================== GERENCIAMENTO DE EMPRESAS ====================
+        function atualizarDisplayEmpresa() {
+            if (db.empresaAtiva) {
+                document.getElementById('empresaNomeDisplay').textContent = `🏢 ${db.empresaAtiva.nome}`;
+                document.getElementById('empresaCnpjDisplay').textContent = db.empresaAtiva.cnpj;
+            }
+        }
+
+        window.selecionarEmpresa = function(empresaId) {
+            if (db.mudarEmpresa(empresaId)) {
+                atualizarDisplayEmpresa();
+                renderEmpresasList();
+                renderPlanilha();
+                atualizarStatus(`Empresa alterada: ${db.empresaAtiva.nome}`);
+            }
+        };
+
+        window.abrirSeletorEmpresa = function() {
+            const container = document.getElementById('empresaSelectorList');
+            container.innerHTML = '';
+            
+            db.empresas.forEach(emp => {
+                const card = document.createElement('div');
+                card.className = `empresa-card ${emp.id === db.empresaAtiva?.id ? 'selected' : ''}`;
+                card.onclick = () => {
+                    selecionarEmpresa(emp.id);
+                    fecharModalSeletorEmpresa();
+                };
+                card.innerHTML = `
+                    <h4>${emp.nome}</h4>
+                    <p>${emp.cnpj}</p>
+                `;
+                container.appendChild(card);
+            });
+            
+            document.getElementById('modalSeletorEmpresa').classList.remove('hidden');
+        };
+
+        window.fecharModalSeletorEmpresa = function() {
+            document.getElementById('modalSeletorEmpresa').classList.add('hidden');
+        };
+
+        window.abrirModalNovaEmpresa = function() {
+            document.getElementById('modalNovaEmpresa').classList.remove('hidden');
+        };
+
+        window.fecharModalNovaEmpresa = function() {
+            document.getElementById('modalNovaEmpresa').classList.add('hidden');
+            document.getElementById('novaEmpresaNome').value = '';
+            document.getElementById('novaEmpresaCnpj').value = '';
+        };
+
+        window.salvarNovaEmpresa = function() {
+            const nome = document.getElementById('novaEmpresaNome').value;
+            const cnpj = document.getElementById('novaEmpresaCnpj').value;
+            
+            if (!nome || !cnpj) {
+                alert('Preencha todos os campos');
+                return;
+            }
+            
+            const novaEmpresa = db.adicionarEmpresa(nome, cnpj);
+            fecharModalNovaEmpresa();
+            renderEmpresasList();
+            selecionarEmpresa(novaEmpresa.id);
+            atualizarStatus(`Empresa ${nome} criada`);
+        };
+
+        // ==================== MODAL FORNECEDOR ====================
+        window.abrirModalFornecedor = function() {
+            document.getElementById('modalFornecedor').classList.remove('hidden');
+        };
+
+        window.fecharModalFornecedor = function() {
+            document.getElementById('modalFornecedor').classList.add('hidden');
+            document.getElementById('fCnpj').value = '';
+            document.getElementById('fRazao').value = '';
+            document.getElementById('fUf').value = '';
+            document.getElementById('fMunicipio').value = '';
+            document.getElementById('fEndereco').value = '';
+            document.getElementById('fSituacao').value = '0';
+            document.getElementById('fAcumulador').value = '101';
+            document.getElementById('fCfop').value = '1933';
+        };
+
+        window.salvarFornecedorManual = function() {
+            const fornecedor = {
+                cnpj: document.getElementById('fCnpj').value.replace(/[^\d]/g, ''),
+                razao: document.getElementById('fRazao').value,
+                uf: document.getElementById('fUf').value.toUpperCase(),
+                municipio: document.getElementById('fMunicipio').value,
+                endereco: document.getElementById('fEndereco').value,
+                situacao: document.getElementById('fSituacao').value,
+                acumulador: document.getElementById('fAcumulador').value,
+                cfop: document.getElementById('fCfop').value
+            };
+
+            if (!fornecedor.cnpj || !fornecedor.razao || !fornecedor.uf || !fornecedor.municipio) {
+                alert('Preencha todos os campos obrigatórios');
+                return;
+            }
+
+            db.adicionarFornecedor(fornecedor);
+            fecharModalFornecedor();
+            renderFornecedores();
+            atualizarStatus(`Fornecedor ${fornecedor.razao} adicionado`);
+        };
+
+        // ==================== INTERFACE ====================
+        window.toggleSidebar = function() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('mainContent').classList.toggle('expanded');
+        };
+
+        window.mudarAba = function(aba) {
+            currentAba = aba;
+            
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            event.target.closest('.menu-item').classList.add('active');
+
+            document.getElementById('worksheetContainer').classList.add('hidden');
+            document.getElementById('databaseViewer').classList.add('hidden');
+            document.getElementById('importacaoView').classList.add('hidden');
+            document.getElementById('filterBar').classList.add('hidden');
+            document.getElementById('mesesBar').classList.add('hidden');
+            document.getElementById('quickTools').classList.add('hidden');
+
+            if (aba === 'planilha') {
+                document.getElementById('worksheetContainer').classList.remove('hidden');
+                document.getElementById('filterBar').classList.remove('hidden');
+                document.getElementById('mesesBar').classList.remove('hidden');
+                document.getElementById('quickTools').classList.remove('hidden');
+                document.getElementById('pageTitle').innerHTML = '📊 Planilha Operacional';
+                renderPlanilha();
+            } else if (aba === 'database') {
+                document.getElementById('databaseViewer').classList.remove('hidden');
+                document.getElementById('pageTitle').innerHTML = '🗄️ Banco de Dados';
+                renderFornecedores();
+            } else if (aba === 'importacao') {
+                document.getElementById('importacaoView').classList.remove('hidden');
+                document.getElementById('pageTitle').innerHTML = '📤 Importação';
+            }
+        };
+
+        // ==================== STATUS ====================
+        function atualizarStatus(mensagem) {
+            if (mensagem) document.getElementById('statusMessage').innerHTML = mensagem;
+            
+            document.getElementById('registrosMes').textContent = currentLinhas.length;
+            
+            const total = currentLinhas.reduce((acc, l) => 
+                acc + parseFloat(l.vlrServicos?.replace(',', '.') || '0'), 0);
+            document.getElementById('totalValor').textContent = total.toFixed(2).replace('.', ',');
+        }
+
+        // ==================== INICIALIZAÇÃO ====================
+        window.onload = function() {
+            inicializarSistema();
+        };
+
+        // Fechar modais ao clicar fora
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.classList.add('hidden');
+            }
+        };
+    </script>
+</body>
+</html>
