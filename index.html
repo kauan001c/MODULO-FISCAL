@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SIS-C · FISCAL 3.0</title>
+<title>SIS-C · FISCAL 4.0</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -266,6 +267,10 @@ html,body{height:100%;overflow:hidden;font-family:var(--font-sans);font-size:13p
 .tag{display:inline-block;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:600;font-family:var(--font-mono)}
 .tag-ok{background:rgba(16,185,129,.15);color:var(--c-green)}
 .tag-cancel{background:rgba(239,68,68,.15);color:var(--c-red)}
+.tag-denegada{background:rgba(139,92,246,.15);color:var(--c-purple)}
+.tag-inutilizada{background:rgba(100,116,139,.15);color:var(--c-text3)}
+.tag-processamento{background:rgba(245,158,11,.15);color:var(--c-gold)}
+.tag-pendente{background:rgba(6,182,212,.15);color:var(--c-cyan)}
 .tag-sim{background:rgba(59,130,246,.15);color:var(--c-accent)}
 .tag-nao{background:var(--c-surface3);color:var(--c-text3)}
 
@@ -530,6 +535,53 @@ html,body{height:100%;overflow:hidden;font-family:var(--font-sans);font-size:13p
 .cc-status.disc{background:rgba(239,68,68,.15);color:var(--c-red)}
 .cc-status.loading{background:rgba(245,158,11,.15);color:var(--c-gold)}
 
+/* ── IMPORT PREVIEW ── */
+.imp-preview{margin-top:10px}
+.imp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.imp-stat{background:var(--c-surface2);border:1px solid var(--c-border);border-radius:var(--r);padding:8px 10px;text-align:center}
+.imp-stat-val{font-size:18px;font-weight:700;font-family:var(--font-mono);color:var(--c-accent)}
+.imp-stat-lbl{font-size:9px;color:var(--c-text3);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+.imp-stat.ok .imp-stat-val{color:var(--c-green)}
+.imp-stat.err .imp-stat-val{color:var(--c-red)}
+.imp-stat.warn .imp-stat-val{color:var(--c-gold)}
+.imp-stat.info .imp-stat-val{color:var(--c-cyan)}
+.imp-preview-table{width:100%;border-collapse:collapse;font-size:10px;margin-bottom:10px;max-height:250px;overflow:auto;display:block}
+.imp-preview-table thead th{background:var(--c-surface2);color:var(--c-text3);padding:6px 8px;border:1px solid var(--c-border);font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.4px;position:sticky;top:0;z-index:5}
+.imp-preview-table tbody td{padding:5px 8px;border:1px solid var(--c-border);color:var(--c-text);font-family:var(--font-mono)}
+.imp-preview-table tbody tr:hover td{background:var(--c-surface2)}
+.imp-preview-table tbody tr.row-error td{background:rgba(239,68,68,.05)}
+.imp-preview-table tbody tr.row-dup td{background:rgba(245,158,11,.05)}
+.imp-col-map{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;max-height:200px;overflow-y:auto}
+.imp-col-item{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--c-surface2);border:1px solid var(--c-border);border-radius:var(--r);font-size:10px}
+.imp-col-item.mapped{border-color:var(--c-green)}
+.imp-col-item.unmapped{border-color:var(--c-red);opacity:.6}
+.imp-col-arrow{color:var(--c-text3);font-size:12px}
+.imp-col-src{font-family:var(--font-mono);color:var(--c-text2);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imp-col-dst{font-family:var(--font-mono);color:var(--c-green);font-weight:600}
+.imp-col-dst.none{color:var(--c-red)}
+.imp-progress{height:4px;background:var(--c-surface2);border-radius:2px;overflow:hidden;margin:8px 0}
+.imp-progress-bar{height:100%;background:linear-gradient(90deg,var(--c-accent),var(--c-green));border-radius:2px;transition:width .3s ease;width:0}
+.imp-val-badge{display:inline-block;padding:1px 5px;border-radius:10px;font-size:8px;font-weight:600;font-family:var(--font-mono)}
+.imp-val-ok{background:rgba(16,185,129,.15);color:var(--c-green)}
+.imp-val-err{background:rgba(239,68,68,.15);color:var(--c-red)}
+.imp-val-warn{background:rgba(245,158,11,.15);color:var(--c-gold)}
+.sit-cell{display:flex;align-items:center;gap:4px}
+.sit-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sit-dot.s0{background:var(--c-green)}
+.sit-dot.s1{background:var(--c-purple)}
+.sit-dot.s2{background:var(--c-red)}
+.sit-dot.s3{background:var(--c-text3)}
+.sit-dot.s4{background:var(--c-gold);animation:pulse 2s infinite}
+.sit-dot.s5{background:var(--c-cyan)}
+.cnpj-valid{color:var(--c-green)!important}
+.cnpj-invalid{color:var(--c-red)!important}
+.imp-dz-excel{border-color:var(--c-green)!important;background:rgba(16,185,129,.03)!important}
+.imp-accepted-formats{display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.fmt-badge{padding:2px 8px;border-radius:12px;font-size:9px;font-weight:600;font-family:var(--font-mono);border:1px solid var(--c-border)}
+.fmt-xlsx{background:rgba(16,185,129,.1);color:var(--c-green);border-color:rgba(16,185,129,.3)}
+.fmt-xls{background:rgba(59,130,246,.1);color:var(--c-accent);border-color:rgba(59,130,246,.3)}
+.fmt-csv{background:rgba(245,158,11,.1);color:var(--c-gold);border-color:rgba(245,158,11,.3)}
+.fmt-txt{background:var(--c-surface3);color:var(--c-text3)}
 /* Utilities */
 .hidden{display:none!important}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden}
@@ -559,7 +611,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font-sans);font-size:13p
   <div class="sb-logo">
     <div class="sb-logo-mark">SIS-C</div>
     <div class="sb-logo-text">
-      <strong>FISCAL 3.0</strong>
+      <strong>FISCAL 4.0</strong>
       <small>MULTI-EMPRESA</small>
     </div>
   </div>
@@ -574,7 +626,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--font-sans);font-size:13p
     <div class="sb-divider"></div>
     <div class="sb-sect">GESTÃO</div>
     <div class="sb-nav-item" id="n-db" onclick="nav('db')"><span class="ico">🗄️</span><span class="sb-label">Banco de Dados</span><span class="sb-badge" id="sbBadge">0</span></div>
-    <div class="sb-nav-item" id="n-imp" onclick="nav('imp')"><span class="ico">📤</span><span class="sb-label">Importação</span></div>
+    <div class="sb-nav-item" id="n-imp" onclick="nav('imp')"><span class="ico">📤</span><span class="sb-label">Importação Excel</span></div>
     <div class="sb-nav-item" id="n-xml" onclick="nav('xml')"><span class="ico">⚙️</span><span class="sb-label">Integração XML</span><span class="sb-badge b-amber" id="xmlBadge" style="display:none">0</span></div>
     <div class="sb-nav-item" id="n-correio" onclick="nav('correio')"><span class="ico">📬</span><span class="sb-label">Correio Fiscal</span><span class="sb-badge b-green" id="correioCount" style="display:none">0</span></div>
     <div class="sb-divider"></div>
@@ -661,10 +713,14 @@ html,body{height:100%;overflow:hidden;font-family:var(--font-sans);font-size:13p
           <option value="sim">Com retenção</option>
           <option value="nao">Sem retenção</option>
         </select>
-        <select id="fSit" class="fc-input" style="width:120px;padding:4px 7px;font-size:10px" onchange="renderSheet()">
+        <select id="fSit" class="fc-input" style="width:140px;padding:4px 7px;font-size:10px" onchange="renderSheet()">
           <option value="">Todas situações</option>
-          <option value="0">Regulares</option>
-          <option value="2">Canceladas</option>
+          <option value="0">🟢 Regulares</option>
+          <option value="1">🟣 Denegadas</option>
+          <option value="2">🔴 Canceladas</option>
+          <option value="3">⚫ Inutilizadas</option>
+          <option value="4">🟡 Em Processamento</option>
+          <option value="5">🔵 Pendentes</option>
         </select>
         <div class="t-sep"></div>
         <button class="btn btn-danger btn-sm" onclick="limparMes()">🗑️ Limpar Mês</button>
@@ -709,38 +765,53 @@ html,body{height:100%;overflow:hidden;font-family:var(--font-sans);font-size:13p
       <div class="imp-view">
         <!-- DB -->
         <div class="imp-panel">
-          <div class="imp-panel-h">🗄️ Importar Banco de Fornecedores</div>
+          <div class="imp-panel-h">🗄️ Importar Banco de Fornecedores<span style="margin-left:auto;font-size:9px;color:var(--c-text3);font-family:var(--font-mono)">EXCEL + CSV</span></div>
           <div class="imp-panel-b">
             <div class="dz" id="dzDB" ondragover="dzOver(event,'dzDB')" ondragleave="dzLeave('dzDB')" ondrop="dzDrop(event,'db')" onclick="document.getElementById('fDB').click()">
               <div class="dz-icon">📂</div>
-              <div class="dz-title">Arraste o arquivo CSV aqui</div>
-              <div class="dz-sub">O sistema detecta automaticamente as colunas pelo cabeçalho</div>
-              <div class="dz-sub" style="margin-top:4px">Separador: ponto e vírgula (;)</div>
-              <input type="file" id="fDB" accept=".csv,.txt" style="display:none" onchange="impDB(this.files)">
+              <div class="dz-title">Arraste o arquivo Excel ou CSV aqui</div>
+              <div class="dz-sub">Detecção inteligente de colunas com mapeamento automático</div>
+              <div class="imp-accepted-formats">
+                <span class="fmt-badge fmt-xlsx">.XLSX</span>
+                <span class="fmt-badge fmt-xls">.XLS</span>
+                <span class="fmt-badge fmt-csv">.CSV</span>
+                <span class="fmt-badge fmt-txt">.TXT</span>
+              </div>
+              <input type="file" id="fDB" accept=".xlsx,.xls,.csv,.txt" style="display:none" onchange="impDB(this.files)">
             </div>
-            <div style="display:flex;gap:6px;margin-bottom:10px">
-              <button class="btn btn-prim btn-sm" onclick="document.getElementById('fDB').click()">Selecionar</button>
-              <button class="btn btn-ghost btn-sm" onclick="baixarModeloDB()">📥 Modelo</button>
+            <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
+              <button class="btn btn-prim btn-sm" onclick="document.getElementById('fDB').click()">📂 Selecionar Arquivo</button>
+              <button class="btn btn-ghost btn-sm" onclick="baixarModeloDB()">📥 Modelo CSV</button>
+              <span id="dbFileInfo" style="font-size:10px;color:var(--c-text3);font-family:var(--font-mono);margin-left:auto"></span>
             </div>
-            <div class="imp-log" id="logDB"><div class="ll">· Pronto</div></div>
+            <div id="dbImportPreview"></div>
+            <div class="imp-log" id="logDB"><div class="ll">· Pronto para importação</div></div>
           </div>
         </div>
         <!-- OP -->
         <div class="imp-panel">
-          <div class="imp-panel-h">📋 Importar Planilha Operacional</div>
+          <div class="imp-panel-h">📋 Importar Planilha Operacional<span style="margin-left:auto;font-size:9px;color:var(--c-text3);font-family:var(--font-mono)">EXCEL + CSV</span></div>
           <div class="imp-panel-b">
             <div class="dz" id="dzOP" ondragover="dzOver(event,'dzOP')" ondragleave="dzLeave('dzOP')" ondrop="dzDrop(event,'op')" onclick="document.getElementById('fOP').click()">
               <div class="dz-icon">📊</div>
-              <div class="dz-title">Arraste o arquivo CSV aqui</div>
-              <div class="dz-sub">O sistema detecta e mapeia as colunas automaticamente</div>
-              <div class="dz-sub" style="margin-top:4px">Funciona com cabeçalho em maiúsculo, minúsculo ou sem acento</div>
-              <input type="file" id="fOP" accept=".csv,.txt" style="display:none" onchange="impOP(this.files)">
+              <div class="dz-title">Arraste o arquivo Excel ou CSV aqui</div>
+              <div class="dz-sub">Mapeamento inteligente de colunas com validação de dados</div>
+              <div class="dz-sub" style="margin-top:3px;font-weight:600;color:var(--c-gold)">⚡ Detecta Situação automaticamente (código, texto, abreviação)</div>
+              <div class="imp-accepted-formats">
+                <span class="fmt-badge fmt-xlsx">.XLSX</span>
+                <span class="fmt-badge fmt-xls">.XLS</span>
+                <span class="fmt-badge fmt-csv">.CSV</span>
+                <span class="fmt-badge fmt-txt">.TXT</span>
+              </div>
+              <input type="file" id="fOP" accept=".xlsx,.xls,.csv,.txt" style="display:none" onchange="impOP(this.files)">
             </div>
-            <div style="display:flex;gap:6px;margin-bottom:10px">
-              <button class="btn btn-prim btn-sm" onclick="document.getElementById('fOP').click()">Selecionar</button>
-              <button class="btn btn-ghost btn-sm" onclick="baixarModeloOP()">📥 Modelo</button>
+            <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
+              <button class="btn btn-prim btn-sm" onclick="document.getElementById('fOP').click()">📂 Selecionar Arquivo</button>
+              <button class="btn btn-ghost btn-sm" onclick="baixarModeloOP()">📥 Modelo CSV</button>
+              <span id="opFileInfo" style="font-size:10px;color:var(--c-text3);font-family:var(--font-mono);margin-left:auto"></span>
             </div>
-            <div class="imp-log" id="logOP"><div class="ll">· Pronto</div></div>
+            <div id="opImportPreview"></div>
+            <div class="imp-log" id="logOP"><div class="ll">· Pronto para importação</div></div>
           </div>
         </div>
       </div>
@@ -852,8 +923,8 @@ html,body{height:100%;overflow:hidden;font-family:var(--font-sans);font-size:13p
 <div class="modal-bg" id="mFornecedor"><div class="modal-box">
   <div class="mh"><h3 id="mFornTitle">🏭 Cadastrar Fornecedor</h3><button class="m-close" onclick="closeModal('mFornecedor')">✕</button></div>
   <div class="mb">
-    <div class="frow fg"><label>CNPJ/CPF <span class="req">*</span></label><input class="fc-input mono" id="f_cnpj" placeholder="00.000.000/0001-99">
-    <label>Situação</label><select class="fc-input" id="f_sit"><option value="0">0 – Regular</option><option value="2">2 – Cancelada</option></select></div>
+    <div class="frow fg"><label>CNPJ/CPF <span class="req">*</span></label><input class="fc-input mono" id="f_cnpj" placeholder="00.000.000/0001-99" oninput="validarCNPJInput(this)">
+    <label>Situação</label><select class="fc-input" id="f_sit"><option value="0">0 – Regular</option><option value="1">1 – Denegada</option><option value="2">2 – Cancelada</option><option value="3">3 – Inutilizada</option><option value="4">4 – Em Processamento</option><option value="5">5 – Pendente</option></select></div>
     <div class="frow s1 fg"><label>Razão Social <span class="req">*</span></label><input class="fc-input" id="f_razao" placeholder="NOME DO FORNECEDOR"></div>
     <div class="frow fg"><label>UF <span class="req">*</span></label><input class="fc-input" id="f_uf" maxlength="2" placeholder="SP">
     <label>Município <span class="req">*</span></label><input class="fc-input" id="f_mun" placeholder="SÃO PAULO"></div>
@@ -918,7 +989,7 @@ const COLS = [
   {f:'nDoc',    l:'Nº Doc',     cls:'',   type:'text', w:80},
   {f:'serie',   l:'Série',      cls:'',   type:'text', w:52},
   {f:'data',    l:'Data',       cls:'',   type:'text', w:85},
-  {f:'situacao',l:'Situação',   cls:'',   type:'sel',  w:100, opts:[{v:'0',l:'0 – Regular'},{v:'2',l:'2 – Cancelada'}]},
+  {f:'situacao',l:'Situação',   cls:'',   type:'sit',  w:140, opts:[{v:'0',l:'0 – Regular'},{v:'1',l:'1 – Denegada'},{v:'2',l:'2 – Cancelada'},{v:'3',l:'3 – Inutilizada'},{v:'4',l:'4 – Em Processam.'},{v:'5',l:'5 – Pendente'}]},
   {f:'acumulador',l:'Acumul.',  cls:'',   type:'text', w:65},
   {f:'cfop',    l:'CFOP',       cls:'',   type:'text', w:58},
   {f:'vlrServicos',l:'Vlr Serviços',cls:'',type:'num', w:90},
@@ -938,34 +1009,173 @@ const COLS = [
   {f:'_act',    l:'',           cls:'',   type:'act',  w:60}
 ];
 
-// Mapeamento normalizado de títulos de coluna
+// Mapeamento normalizado de títulos de coluna (MEGA EXPANDIDO)
 const COL_MAP = {
-  cnpj:['cnpj','cpf','cnpj/cpf','cpf/cnpj','documento'],
-  razao:['razao','razão','razao social','razão social','nome','fornecedor','empresa'],
-  uf:['uf','estado','uf estado'],
-  municipio:['municipio','município','cidade','municipio/cidade'],
-  endereco:['endereco','endereço','logradouro'],
-  nDoc:['ndoc','n doc','n.doc','num doc','numero doc','número doc','n° doc','nf','nota','nota fiscal','numero','número','n documento','nº documento','nº doc'],
-  serie:['serie','série','serie nf'],
-  data:['data','data emissão','data emissao','data nf','data nota'],
-  situacao:['situacao','situação','status'],
-  acumulador:['acumulador','acum','acumul'],
-  cfop:['cfop'],
-  vlrServicos:['vlr servicos','vlr serviços','valor servicos','valor serviços','valor','vl servicos','vl serviços','vlrservicos'],
-  vlrDescontos:['vlr descontos','valor descontos','descontos'],
-  vlrContabil:['vlr contabil','vlr contábil','valor contabil','valor contábil','vlrcontabil'],
-  baseCalculo:['base calculo','base cálculo','base calc','basecalculo'],
-  aliquotaISS:['aliquota iss','alíquota iss','aliq iss','aliquotaiss','aliq.iss'],
-  vlrISSNormal:['vlr iss normal','iss normal','valor iss normal'],
-  vlrISSRetido:['vlr iss retido','iss retido','valor iss retido'],
-  vlrIRRF:['vlr irrf','irrf','valor irrf'],
-  vlrPIS:['vlr pis','pis','valor pis'],
-  vlrCOFINS:['vlr cofins','cofins','valor cofins'],
-  vlrCSLL:['vlr csll','csll','valor csll'],
-  vlrCRF:['vlr crf','crf','valor crf'],
-  vlrINSS:['vlr inss','inss','valor inss'],
-  retencao:['retencao','retenção','tem retencao','tem retenção']
+  cnpj:['cnpj','cpf','cnpj/cpf','cpf/cnpj','documento','doc','cnpj cpf','cnpj_cpf','cnpjcpf','inscricao','inscricao federal','inscrição federal','nr documento','cpf cnpj','cpf_cnpj','numero documento','número documento','doc fiscal','documento fiscal'],
+  razao:['razao','razão','razao social','razão social','nome','fornecedor','empresa','nome empresa','nome fornecedor','razaosocial','nome fantasia','nome_fantasia','fantasia','emit','emitente','nome emitente','prestador','nome prestador','denominacao','denominação','desc fornecedor','descricao fornecedor'],
+  uf:['uf','estado','uf estado','sigla uf','sigla estado','uf emit','uf emitente','estado emit','uf fornecedor','unidade federativa'],
+  municipio:['municipio','município','cidade','municipio/cidade','municipio cidade','mun','localidade','cidade emit','cidade emitente','municipio emit','nome municipio','nome município','mun emit','cidade fornecedor'],
+  endereco:['endereco','endereço','logradouro','rua','end','endereco completo','endereço completo','end fornecedor','logradouro emit','logradouro emitente','end emit','endereco emit','endereço emit','endereco fornecedor','endereço fornecedor'],
+  nDoc:['ndoc','n doc','n.doc','num doc','numero doc','número doc','n° doc','nf','nota','nota fiscal','numero','número','n documento','nº documento','nº doc','nr nf','nr nota','num nf','num nota','numero nf','número nf','numero nota','número nota','doc nr','nr doc','nro doc','nro nf','nro','n. doc','n.documento','n.nf','nota nr','nf nr','n nota','chave','nr','num','numero da nota','número da nota','doc numero','doc número','n.f.','n.f','nfe','nfse','nr nfse','nr nfe','doc_nr','n doc.','n_doc','ndocumento','nota_fiscal','nro_doc','numero_doc','numero_nota','nr_nf'],
+  serie:['serie','série','serie nf','serie nota','sr','ser','serie_nf','serie doc'],
+  data:['data','data emissão','data emissao','data nf','data nota','dt','dt emissao','dt emissão','data emit','dt emit','data lancamento','data lançamento','data entrada','dt entrada','dt nf','data doc','dt doc','data_emissao','data_emissão','data_nf','data_nota','dt_emissao','dt_nf','competencia','competência','data competencia','data competência','periodo','período','data operacao','data operação','data fato','data_lancamento','dt_lancamento','dt lancamento','emissao','emissão','data da nota','data da nf','data emiss'],
+  situacao:['situacao','situação','status','sit','situacão','situaçao','status nota','status nf','sit nota','sit nf','situacao nota','situação nota','situacao nf','situação nf','cod situacao','cod situação','codigo situacao','código situação','sit.','status doc','status documento','situação do documento','situacao do documento','status da nota','status da nf','situacao da nota','situação da nota','situacao_nota','situacao_nf','status_nota','status_nf','sit_nota','sit_nf','situacao fiscal','situação fiscal','condicao','condição','estado doc','estado nota','cst','cod_sit','cod_situacao','codigo_situacao'],
+  acumulador:['acumulador','acum','acumul','acumulador fiscal','cod acum','cod acumulador','código acumulador','acum.','acumul.','acumulador_fiscal','cod_acumulador'],
+  cfop:['cfop','cod fiscal','código fiscal','cfop_entrada','cfop entrada','cfop operacao','cfop operação','nat operacao','natureza operacao','natureza operação','nat. operação','nat_operacao'],
+  vlrServicos:['vlr servicos','vlr serviços','valor servicos','valor serviços','valor','vl servicos','vl serviços','vlrservicos','valor total','vlr total','valor nf','vlr nf','total','total servicos','total serviços','vl total','valor bruto','vlr bruto','total nf','total nota','valor nota','vlr nota','vlr_servicos','valor_servicos','vl_servicos','total_servicos','total_nota','valor_nota','vl_nota','receita','receita bruta','valor receita','vlr receita','faturamento','valor faturamento'],
+  vlrDescontos:['vlr descontos','valor descontos','descontos','desconto','vlr desconto','valor desconto','desc','vl descontos','vl desconto','vlr_descontos','valor_descontos','desc.'],
+  vlrContabil:['vlr contabil','vlr contábil','valor contabil','valor contábil','vlrcontabil','contabil','contábil','valor contábil total','vlr_contabil','valor_contabil','vlr contab','valor contab'],
+  baseCalculo:['base calculo','base cálculo','base calc','basecalculo','base','bc','base de calculo','base de cálculo','bc iss','base iss','vlr base','valor base','base_calculo','base_calc','basecalc','vlr_base'],
+  aliquotaISS:['aliquota iss','alíquota iss','aliq iss','aliquotaiss','aliq.iss','aliquota','alíquota','aliq','aliq.','percentual iss','perc iss','taxa iss','% iss','aliquota_iss','aliq_iss','pct iss','pct_iss'],
+  vlrISSNormal:['vlr iss normal','iss normal','valor iss normal','iss','iss devido','vlr iss','valor iss','iss_normal','vlr_iss_normal','valor_iss_normal','vlr_iss','iss a pagar','iss devido normal'],
+  vlrISSRetido:['vlr iss retido','iss retido','valor iss retido','iss ret','iss_retido','vlr_iss_retido','valor_iss_retido','iss_ret','iss retido na fonte','ret iss','retencao iss','retenção iss'],
+  vlrIRRF:['vlr irrf','irrf','valor irrf','ir','imposto renda','irrf retido','vlr_irrf','valor_irrf','irrf_retido','ir retido','ir_retido','ret irrf','ret ir','irrf fonte','irrf na fonte'],
+  vlrPIS:['vlr pis','pis','valor pis','pis retido','vlr_pis','valor_pis','pis_retido','ret pis','pis ret','pis na fonte'],
+  vlrCOFINS:['vlr cofins','cofins','valor cofins','cofins retido','vlr_cofins','valor_cofins','cofins_retido','ret cofins','cofins ret','cofins na fonte'],
+  vlrCSLL:['vlr csll','csll','valor csll','csll retido','vlr_csll','valor_csll','csll_retido','ret csll','csll ret','contribuicao social','contribuição social'],
+  vlrCRF:['vlr crf','crf','valor crf','csrf','vlr_crf','valor_crf','crf_retido','ret crf','pis cofins csll','pcc'],
+  vlrINSS:['vlr inss','inss','valor inss','inss retido','vlr_inss','valor_inss','inss_retido','ret inss','inss ret','previdencia','previdência','inss na fonte'],
+  retencao:['retencao','retenção','tem retencao','tem retenção','retido','tem retido','com retencao','com retenção','possui retencao','possui retenção','ret','retencao_flag','retencao?','retenção?','houve retencao','houve retenção']
 };
+
+// ─── SITUAÇÃO ENGINE (MEGA MAPEAMENTO) ───────────────────────────────────────
+const SIT_MAP = {
+  '0': {code:'0', label:'Regular',     tag:'tag-ok',           dot:'s0', color:'var(--c-green)'},
+  '1': {code:'1', label:'Denegada',    tag:'tag-denegada',     dot:'s1', color:'var(--c-purple)'},
+  '2': {code:'2', label:'Cancelada',   tag:'tag-cancel',       dot:'s2', color:'var(--c-red)'},
+  '3': {code:'3', label:'Inutilizada', tag:'tag-inutilizada',  dot:'s3', color:'var(--c-text3)'},
+  '4': {code:'4', label:'Em Processamento', tag:'tag-processamento', dot:'s4', color:'var(--c-gold)'},
+  '5': {code:'5', label:'Pendente',    tag:'tag-pendente',     dot:'s5', color:'var(--c-cyan)'}
+};
+
+// Normaliza qualquer input de situação para o código correto
+function normalizeSituacao(val){
+  if(val===null||val===undefined||val==='') return '0';
+  const v = String(val).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  // Código direto
+  if(/^[0-5]$/.test(v)) return v;
+  // Texto com código prefixado: "0 – Regular", "2 - Cancelada"
+  const prefixMatch = v.match(/^(\d)\s*[-–—:.\s]/);
+  if(prefixMatch && /^[0-5]$/.test(prefixMatch[1])) return prefixMatch[1];
+  // Palavras-chave
+  const keywords = {
+    '0': ['regular','ativa','ativo','normal','vigente','valida','válida','ok','aprovada','aprovado','autorizada','autorizado','emitida','emitido','escriturada','reg','oper','operacao normal','operação normal','uso permitido','uso autorizado','1 uso normal','100','deferida','deferido','efetivada','efetivado'],
+    '1': ['denegada','denegado','denegacao','denegação','neg','negada','negado','recusada','recusado','ind','indeferida','indeferido','110','denegacao de uso','denegação de uso','2 denegacao','nao autorizada','não autorizada'],
+    '2': ['cancelada','cancelado','cancel','canc','anulada','anulado','estornada','estornado','revogada','revogado','inativa','inativo','desativada','desativado','excluida','excluída','can','101','cancelamento','3 cancelamento','cancelada dentro prazo','cancelada fora prazo','canc.'],
+    '3': ['inutilizada','inutilizado','inut','inutilizacao','inutilização','descartada','descartado','obsoleta','obsoleto','invalida','inválida','invalido','inválido','102','4 inutilizacao','inutilizacao de numero','numeracao inutilizada','inut.'],
+    '4': ['processando','processamento','em processamento','aguardando','em andamento','tramitando','pendente processamento','proc','em analise','em análise','analisando','verificando','em verificacao','em verificação','em tramite','em trâmite','em execucao','em execução','em processo','andamento'],
+    '5': ['pendente','pend','a verificar','a conferir','a analisar','aguarda','em espera','incompleta','incompleto','parcial','rascunho','draft','provisoria','provisório','provisória','temporaria','temporária','temp','prov','em aberto','aberta','aberto','nao finalizada','não finalizada','a concluir','falta','inconclusiva','aguardando aprovacao','aguardando aprovação']
+  };
+  for(const [code, words] of Object.entries(keywords)){
+    if(words.some(w => v === w || v.includes(w))) return code;
+  }
+  // Última tentativa: número no texto
+  const numMatch = v.match(/\d/);
+  if(numMatch && /^[0-5]$/.test(numMatch[0])) return numMatch[0];
+  return '0'; // Default: Regular
+}
+
+function getSitInfo(code){
+  return SIT_MAP[String(code)] || SIT_MAP['0'];
+}
+
+// ─── CNPJ/CPF VALIDATION ─────────────────────────────────────────────────────
+function validarCNPJ(cnpj){
+  cnpj = cnpj.replace(/\D/g,'');
+  if(cnpj.length === 11) return validarCPF(cnpj);
+  if(cnpj.length !== 14) return false;
+  if(/^(\d)\1+$/.test(cnpj)) return false;
+  let tam = 12, nums = cnpj.substring(0,tam), dig = cnpj.substring(tam);
+  let soma = 0, pos = tam - 7;
+  for(let i = tam; i >= 1; i--){
+    soma += parseInt(nums.charAt(tam - i)) * pos--;
+    if(pos < 2) pos = 9;
+  }
+  let res = soma % 11 < 2 ? 0 : 11 - soma % 11;
+  if(res !== parseInt(dig.charAt(0))) return false;
+  tam = 13; nums = cnpj.substring(0,tam); dig = cnpj.substring(tam);
+  soma = 0; pos = tam - 7;
+  for(let i = tam; i >= 1; i--){
+    soma += parseInt(nums.charAt(tam - i)) * pos--;
+    if(pos < 2) pos = 9;
+  }
+  res = soma % 11 < 2 ? 0 : 11 - soma % 11;
+  return res === parseInt(dig.charAt(0));
+}
+
+function validarCPF(cpf){
+  cpf = cpf.replace(/\D/g,'');
+  if(cpf.length !== 11) return false;
+  if(/^(\d)\1+$/.test(cpf)) return false;
+  let soma = 0;
+  for(let i = 0; i < 9; i++) soma += parseInt(cpf.charAt(i)) * (10 - i);
+  let rev = 11 - (soma % 11);
+  if(rev === 10 || rev === 11) rev = 0;
+  if(rev !== parseInt(cpf.charAt(9))) return false;
+  soma = 0;
+  for(let i = 0; i < 10; i++) soma += parseInt(cpf.charAt(i)) * (11 - i);
+  rev = 11 - (soma % 11);
+  if(rev === 10 || rev === 11) rev = 0;
+  return rev === parseInt(cpf.charAt(10));
+}
+
+function validarCNPJInput(el){
+  const c = el.value.replace(/\D/g,'');
+  if(c.length >= 11){
+    if(validarCNPJ(c)){
+      el.style.borderColor = 'var(--c-green)';
+      el.style.color = 'var(--c-green)';
+    } else {
+      el.style.borderColor = 'var(--c-red)';
+      el.style.color = 'var(--c-red)';
+    }
+  } else {
+    el.style.borderColor = '';
+    el.style.color = '';
+  }
+}
+
+// ─── DATE SMART PARSER ───────────────────────────────────────────────────────
+function smartParseDate(val){
+  if(!val) return '';
+  const v = String(val).trim();
+  // dd/mm/yyyy
+  let m = v.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if(m){
+    const d = m[1].padStart(2,'0'), mo = m[2].padStart(2,'0');
+    let y = m[3]; if(y.length===2) y = (parseInt(y) > 50 ? '19' : '20') + y;
+    return `${d}/${mo}/${y}`;
+  }
+  // yyyy-mm-dd (ISO)
+  m = v.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+  if(m) return `${m[3].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[1]}`;
+  // Excel serial number
+  if(/^\d{5}$/.test(v)){
+    const d = new Date((parseInt(v) - 25569) * 86400 * 1000);
+    if(!isNaN(d)) return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  }
+  return v;
+}
+
+// ─── NUMBER SMART PARSER ─────────────────────────────────────────────────────
+function smartParseNumber(val){
+  if(val === null || val === undefined || val === '') return '0,00';
+  if(typeof val === 'number') return fmtN(val);
+  const v = String(val).trim();
+  // Already in BR format: 1.234,56
+  if(/^\d{1,3}(\.\d{3})*,\d{2}$/.test(v)) return v;
+  // US format: 1,234.56
+  if(/^\d{1,3}(,\d{3})*\.\d{2}$/.test(v)){
+    return fmtN(parseFloat(v.replace(/,/g,'')));
+  }
+  // Plain number: 1234.56
+  if(/^-?\d+\.?\d*$/.test(v)) return fmtN(parseFloat(v));
+  // Plain BR: 1234,56
+  if(/^-?\d+,\d+$/.test(v)) return fmtN(parseFloat(v.replace(',','.')));
+  // Try to extract number
+  const n = parseFloat(v.replace(/[^\d.,-]/g,'').replace(/\./g,'').replace(',','.'));
+  return isNaN(n) ? '0,00' : fmtN(n);
+}
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 let ST = {
@@ -1002,9 +1212,6 @@ function init(){
 
 function loadStorage(){
   ST.empresas = S.get('sc3_empresas')||[];
-  ST.fornecedores = S.get('sc3_fornecedores')||[];
-  ST.corrEmail = S.get('sc3_corrEmail')||'';
-  ST.correio = S.get('sc3_correio')||{};
 
   // Carregar todos os lançamentos operacionais
   S.keys().forEach(k=>{
@@ -1018,25 +1225,102 @@ function loadStorage(){
     const saved=S.get('sc3_ea');
     ST.ea=ST.empresas.find(e=>e.id===saved?.id)||ST.empresas[0];
   }
+
+  loadEmpresaContext();
+}
+
+function hasEmpresaAtiva(){
+  return !!ST.ea?.id;
+}
+
+function companyKey(prefix, empresaId=ST.ea?.id){
+  return empresaId ? `sc3_${prefix}_${empresaId}` : null;
+}
+
+function loadScopedArray(prefix, legacyKey){
+  const key=companyKey(prefix);
+  if(!key)return [];
+  const scoped=S.get(key);
+  if(Array.isArray(scoped))return scoped;
+  const legacy=ST.empresas.length===1?S.get(legacyKey):null;
+  if(Array.isArray(legacy)){
+    S.set(key,legacy);
+    return legacy;
+  }
+  return [];
+}
+
+function loadScopedObject(prefix, legacyKey){
+  const key=companyKey(prefix);
+  if(!key)return {};
+  const scoped=S.get(key);
+  if(scoped&&typeof scoped==='object'&&!Array.isArray(scoped))return scoped;
+  const legacy=ST.empresas.length===1?S.get(legacyKey):null;
+  if(legacy&&typeof legacy==='object'&&!Array.isArray(legacy)){
+    S.set(key,legacy);
+    return legacy;
+  }
+  return {};
+}
+
+function loadScopedString(prefix, legacyKey){
+  const key=companyKey(prefix);
+  if(!key)return '';
+  const scoped=S.get(key);
+  if(typeof scoped==='string')return scoped;
+  const legacy=ST.empresas.length===1?S.get(legacyKey):null;
+  if(typeof legacy==='string'){
+    S.set(key,legacy);
+    return legacy;
+  }
+  return '';
+}
+
+function loadEmpresaContext(){
+  if(!hasEmpresaAtiva()){
+    ST.fornecedores=[];
+    ST.corrEmail='';
+    ST.correio={};
+    return;
+  }
+  ST.fornecedores=loadScopedArray('fornecedores','sc3_fornecedores');
+  ST.corrEmail=loadScopedString('corrEmail','sc3_corrEmail');
+  ST.correio=loadScopedObject('correio','sc3_correio');
+}
+
+function saveEmpresaContext(){
+  if(!hasEmpresaAtiva())return;
+  S.set(companyKey('fornecedores'),ST.fornecedores);
+  S.set(companyKey('corrEmail'),ST.corrEmail);
+  S.set(companyKey('correio'),ST.correio);
+}
+
+function ensureEmpresaAtiva(action='continuar'){
+  if(hasEmpresaAtiva())return true;
+  toast(`Selecione ou cadastre uma empresa antes de ${action}`,'warn');
+  openModal('mEmpresa');
+  return false;
 }
 
 // ─── OPERACIONAL KEY ──────────────────────────────────────────────────────────
-function opKey(mes){return `${ST.ea?.id||'default'}_${mes}`}
-function getLinhas(mes){return ST.op[opKey(mes)]||[]}
+function opKey(mes){return ST.ea?.id?`${ST.ea.id}_${mes}`:null}
+function getLinhas(mes){
+  const key=opKey(mes);
+  return key?(ST.op[key]||[]):[];
+}
 
 // PERSISTÊNCIA ROBUSTA — nunca apaga automaticamente
 function setLinhas(mes,arr){
   const k=opKey(mes);
+  if(!k)return;
   ST.op[k]=arr;
   S.set('sc3_op_'+k,arr);
 }
 
 function salvarTudo(){
   S.set('sc3_empresas',ST.empresas);
-  S.set('sc3_fornecedores',ST.fornecedores);
   S.set('sc3_ea',ST.ea);
-  S.set('sc3_corrEmail',ST.corrEmail);
-  S.set('sc3_correio',ST.correio);
+  saveEmpresaContext();
   Object.entries(ST.op).forEach(([k,v])=>S.set('sc3_op_'+k,v));
   toast('Dados salvos','ok');
 }
@@ -1046,7 +1330,8 @@ let _asSave;
 function autoSave(mes){
   clearTimeout(_asSave);
   _asSave=setTimeout(()=>{
-    S.set('sc3_op_'+opKey(mes),getLinhas(mes));
+    const key=opKey(mes);
+    if(key)S.set('sc3_op_'+key,getLinhas(mes));
   },600);
 }
 
@@ -1056,7 +1341,7 @@ function renderSB(){
   document.getElementById('sbEmpC').textContent=ST.ea?.cnpj||'Cadastre uma empresa';
   document.getElementById('stE').textContent=(ST.ea?.nome||'—').substring(0,18);
   document.getElementById('sbBadge').textContent=ST.fornecedores.length;
-  if(ST.corrEmail) document.getElementById('corrEmail').value=ST.corrEmail;
+  document.getElementById('corrEmail').value=ST.corrEmail||'';
 }
 
 function toggleSB(){document.getElementById('sb').classList.toggle('slim')}
@@ -1072,7 +1357,7 @@ function nav(v){
   const ni=document.getElementById('n-'+v);
   if(ni)ni.classList.add('active');
 
-  const lbl={dash:'Dashboard',op:'Operacional',db:'Banco de Dados',imp:'Importação',xml:'Integração XML',correio:'Correio Fiscal'};
+  const lbl={dash:'Dashboard',op:'Operacional',db:'Banco de Dados',imp:'Importação Excel',xml:'Integração XML',correio:'Correio Fiscal'};
   document.getElementById('bcCur').textContent=lbl[v]||v;
 
   if(v==='dash')renderDash();
@@ -1124,6 +1409,19 @@ function renderSheet(){
   const tbody=document.getElementById('sheetB');
   tbody.innerHTML='';
 
+  if(!hasEmpresaAtiva()){
+    const tr=document.createElement('tr');
+    const td=document.createElement('td');
+    td.colSpan=COLS.length;
+    td.style.cssText='padding:18px;text-align:center;background:var(--c-surface2);color:var(--c-text3)';
+    td.textContent='Selecione uma empresa para visualizar e registrar o operacional.';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    renderFoot([]);
+    updateStatus();
+    return;
+  }
+
   // Agrupar por data para separadores
   let lastDate='';
 
@@ -1162,15 +1460,39 @@ function renderSheet(){
         col.opts.forEach(o=>{const op=document.createElement('option');op.value=o.v;op.textContent=o.l;if(ln[col.f]===o.v)op.selected=true;sel.appendChild(op)});
         sel.onchange=e=>{ln[col.f]=e.target.value;autoSave(ST.mes);updateStatus()};
         td.appendChild(sel);
+      } else if(col.type==='sit'){
+        // SITUAÇÃO com visual rico
+        const sitCode = normalizeSituacao(ln[col.f]);
+        ln[col.f] = sitCode; // normalize stored value
+        const info = getSitInfo(sitCode);
+        const container = document.createElement('div');
+        container.style.cssText='display:flex;align-items:center;gap:5px;padding:0 5px;height:100%';
+        const dot = document.createElement('span');
+        dot.className = 'sit-dot ' + info.dot;
+        const sel=document.createElement('select');
+        sel.className='csel';
+        sel.style.flex='1';
+        col.opts.forEach(o=>{const op=document.createElement('option');op.value=o.v;op.textContent=o.l;if(sitCode===o.v)op.selected=true;sel.appendChild(op)});
+        sel.onchange=e=>{
+          ln[col.f]=e.target.value;
+          autoSave(ST.mes);updateStatus();renderSheet();
+        };
+        container.appendChild(dot);
+        container.appendChild(sel);
+        td.appendChild(container);
       } else {
         const inp=document.createElement('input');
         inp.className='ci'+(col.type==='num'?' num':'');
         inp.value=ln[col.f]||'';
         inp.placeholder=col.l;
         if(col.f==='cnpj'){
+          const c=(ln.cnpj||'').replace(/\D/g,'');
           const f=findForn(ln.cnpj);
-          if(f)inp.classList.add('green');
-          else if((ln.cnpj||'').replace(/\D/g,'').length>=11)inp.classList.add('red-cell');
+          if(f){inp.classList.add('green')}
+          else if(c.length>=11){
+            if(validarCNPJ(c)){inp.classList.add('green')}
+            else{inp.classList.add('red-cell');inp.title='CNPJ/CPF inválido (dígito verificador)'}
+          }
         }
         inp.onchange=e=>{
           ln[col.f]=e.target.value;
@@ -1235,6 +1557,7 @@ function newLinha(){
 }
 
 function addLinha(){
+  if(!ensureEmpresaAtiva('registrar notas'))return;
   const arr=getLinhas(ST.mes);
   arr.push(newLinha());
   setLinhas(ST.mes,arr);
@@ -1258,11 +1581,13 @@ function delLinha(id){
 }
 
 function limparMes(){
+  if(!ensureEmpresaAtiva('limpar o mês'))return;
   if(!confirm(`ATENÇÃO: Limpar TODOS os lançamentos de ${ST.mes}?\nEsta ação não pode ser desfeita.`))return;
   setLinhas(ST.mes,[]);renderSheet();renderMeses();toast('Mês limpo','warn');
 }
 
 function autoFill(){
+  if(!ensureEmpresaAtiva('usar o banco da empresa'))return;
   const arr=getLinhas(ST.mes);let n=0;
   arr.forEach(l=>{
     if(l.cnpj){const f=findForn(l.cnpj);if(f){applyForn(l,f);n++;}}
@@ -1324,10 +1649,11 @@ function onCNPJ(linha,val){
 }
 
 function confirmarForn(){
+  if(!ensureEmpresaAtiva('cadastrar fornecedores'))return;
   if(!ST.pendForn)return;
   ST.pendForn.id=Date.now();
   ST.fornecedores.push(ST.pendForn);
-  S.set('sc3_fornecedores',ST.fornecedores);
+  saveEmpresaContext();
   const arr=getLinhas(ST.mes);
   const l=arr.find(l=>l.cnpj.replace(/\D/g,'')===ST.pendForn.cnpj);
   if(l){applyForn(l,ST.pendForn);autoSave(ST.mes);}
@@ -1336,6 +1662,7 @@ function confirmarForn(){
 }
 
 function salvarFornecedor(){
+  if(!ensureEmpresaAtiva('salvar fornecedores'))return;
   const eid=document.getElementById('mFornecedor').dataset.eid;
   const cnpj=document.getElementById('f_cnpj').value.replace(/\D/g,'');
   const razao=document.getElementById('f_razao').value.trim();
@@ -1350,7 +1677,7 @@ function salvarFornecedor(){
   if(eid){const i=ST.fornecedores.findIndex(x=>x.id===+eid);if(i>=0)ST.fornecedores[i]=f;}
   else ST.fornecedores.push(f);
   delete document.getElementById('mFornecedor').dataset.eid;
-  S.set('sc3_fornecedores',ST.fornecedores);
+  saveEmpresaContext();
   closeModal('mFornecedor');renderDB();renderSB();
   toast(eid?'Fornecedor atualizado':'Fornecedor cadastrado','ok');
   ['f_cnpj','f_razao','f_uf','f_mun','f_end'].forEach(i=>document.getElementById(i).value='');
@@ -1375,7 +1702,7 @@ function editForn(id){
 function delForn(id){
   if(!confirm('Remover este fornecedor do banco?'))return;
   ST.fornecedores=ST.fornecedores.filter(f=>f.id!==id);
-  S.set('sc3_fornecedores',ST.fornecedores);renderDB();renderSB();toast('Removido','warn');
+  saveEmpresaContext();renderDB();renderSB();toast('Removido','warn');
 }
 
 // ─── DATABASE VIEW ─────────────────────────────────────────────────────────────
@@ -1386,6 +1713,12 @@ function renderDB(){
   document.getElementById('dbCnt').textContent=forn.length+' registros';
   document.getElementById('sbBadge').textContent=ST.fornecedores.length;
   const tb=document.getElementById('dbBody');tb.innerHTML='';
+  if(!hasEmpresaAtiva()){
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td colspan="9" style="padding:18px;text-align:center;color:var(--c-text3)">Selecione uma empresa para acessar o banco privado de fornecedores.</td>';
+    tb.appendChild(tr);
+    return;
+  }
   forn.forEach(f=>{
     const tr=document.createElement('tr');
     tr.innerHTML=`
@@ -1394,7 +1727,7 @@ function renderDB(){
       <td style="font-family:var(--font-mono);font-size:10px">${f.uf}</td>
       <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.municipio}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--c-text3)">${f.endereco||''}</td>
-      <td><span class="tag ${f.situacao==='0'?'tag-ok':'tag-cancel'}">${f.situacao==='0'?'Regular':'Cancelada'}</span></td>
+      <td><span class="tag ${getSitInfo(f.situacao).tag}"><span class="sit-dot ${getSitInfo(f.situacao).dot}" style="display:inline-block;width:6px;height:6px;margin-right:4px"></span>${getSitInfo(f.situacao).label}</span></td>
       <td class="dbt-cnpj">${f.acumulador}</td>
       <td class="dbt-cnpj">${f.cfop}</td>
       <td style="white-space:nowrap">
@@ -1405,7 +1738,7 @@ function renderDB(){
   });
 }
 
-// ─── IMPORTAÇÃO INTELIGENTE ────────────────────────────────────────────────────
+// ─── IMPORTAÇÃO INTELIGENTE (MEGA ENGINE) ──────────────────────────────────────
 function normalizeHeader(h){
   return h.toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')  // remove acentos
@@ -1417,21 +1750,52 @@ function normalizeHeader(h){
 function detectColIndex(headers){
   const norm=headers.map(h=>normalizeHeader(h));
   const map={};
+  const scores={}; // track match quality
   Object.entries(COL_MAP).forEach(([field,variants])=>{
-    const idx=norm.findIndex(h=>variants.some(v=>h===normalizeHeader(v)||h.includes(normalizeHeader(v))));
-    if(idx>=0)map[field]=idx;
+    let bestIdx=-1, bestScore=0;
+    norm.forEach((h,idx)=>{
+      // Already mapped to a higher-priority field? Skip
+      const alreadyUsed = Object.values(map).includes(idx);
+      variants.forEach(v=>{
+        const nv=normalizeHeader(v);
+        let score=0;
+        if(h===nv) score=100; // exact match
+        else if(h.startsWith(nv) || nv.startsWith(h)) score=80;
+        else if(h.includes(nv)) score=60;
+        else if(nv.includes(h) && h.length>2) score=40;
+        // Fuzzy: words overlap
+        else {
+          const hw=h.split(' '), vw=nv.split(' ');
+          const overlap=hw.filter(w=>vw.includes(w)).length;
+          if(overlap>0) score=20*overlap;
+        }
+        if(score>bestScore && (!alreadyUsed || score>=80)){
+          bestScore=score; bestIdx=idx;
+        }
+      });
+    });
+    if(bestIdx>=0 && bestScore>=20){
+      map[field]=bestIdx;
+      scores[field]=bestScore;
+    }
   });
-  return map;
+  return {map, scores};
 }
 
 function parseCSV(text){
   const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  // Auto-detect separator
+  const firstLine = lines[0] || '';
+  const sepCounts = {';':0, ',':0, '\t':0, '|':0};
+  for(const c of firstLine){if(c in sepCounts) sepCounts[c]++;}
+  const sep = Object.entries(sepCounts).sort((a,b)=>b[1]-a[1])[0][0] || ';';
+
   return lines.map(line=>{
     const r=[];let inQ=false,cur='';
     for(let i=0;i<line.length;i++){
       const c=line[i];
       if(c==='"'){inQ=!inQ}
-      else if((c===';'||c===',')&&!inQ){r.push(cur.trim().replace(/^"|"$/g,''));cur='';}
+      else if(c===sep&&!inQ){r.push(cur.trim().replace(/^"|"$/g,''));cur='';}
       else cur+=c;
     }
     r.push(cur.trim().replace(/^"|"$/g,''));
@@ -1439,89 +1803,371 @@ function parseCSV(text){
   });
 }
 
-function impDB(files){
-  if(!files||!files[0])return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const rows=parseCSV(e.target.result);
-    if(!rows.length){addLog('logDB','❌ Arquivo vazio','err');return}
-    addLog('logDB',`📂 ${files[0].name}`,'info');
-    // Detectar se tem cabeçalho
-    const firstRow=rows[0];
-    const colMap=detectColIndex(firstRow);
-    const temCabecalho=Object.keys(colMap).length>=2;
-    const dataRows=temCabecalho?rows.slice(1):rows;
-    addLog('logDB',temCabecalho?'✅ Cabeçalho detectado automaticamente':'ℹ️ Sem cabeçalho — usando ordem padrão','info');
+// ─── UNIVERSAL FILE READER (Excel + CSV) ─────────────────────────────────────
+function readFileUniversal(file, callback){
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(ext === 'xlsx' || ext === 'xls'){
+    // Excel file via SheetJS
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, {type:'array', cellDates:true, cellNF:true, cellText:true});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rawData = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false, dateNF:'dd/mm/yyyy'});
+        // Filter empty rows
+        const data = rawData.filter(r => r.some(c => c !== '' && c !== null && c !== undefined));
+        callback(data, ext);
+      } catch(err) {
+        callback(null, ext, 'Erro ao ler arquivo Excel: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    // CSV/TXT
+    const reader = new FileReader();
+    reader.onload = e => {
+      const rows = parseCSV(e.target.result);
+      callback(rows, ext);
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+}
 
-    let cnt=0,skip=0;
-    dataRows.forEach(parts=>{
+// ─── IMPORT PREVIEW RENDERER ─────────────────────────────────────────────────
+function renderImportPreview(containerId, headers, colResult, dataRows, tipo){
+  const el = document.getElementById(containerId);
+  const {map, scores} = colResult;
+  const mappedCount = Object.keys(map).length;
+  const totalHeaders = headers.length;
+
+  // Validation stats
+  let valid=0, errors=0, dups=0, warnings=0;
+  const numFields = ['vlrServicos','vlrDescontos','vlrContabil','baseCalculo','aliquotaISS','vlrISSNormal','vlrISSRetido','vlrIRRF','vlrPIS','vlrCOFINS','vlrCSLL','vlrCRF','vlrINSS'];
+
+  dataRows.forEach(parts => {
+    if(!parts || !parts.join('').trim()) return;
+    let hasError = false, isDup = false;
+    const cnpjIdx = map.cnpj;
+    if(cnpjIdx !== undefined){
+      const cnpj = (String(parts[cnpjIdx]||'')).replace(/\D/g,'');
+      if(cnpj.length >= 11 && !validarCNPJ(cnpj)) hasError = true;
+      if(tipo === 'db' && cnpj && ST.fornecedores.find(f=>f.cnpj.replace(/\D/g,'')===cnpj)) isDup = true;
+    }
+    // Situação validation
+    if(map.situacao !== undefined){
+      const sitRaw = String(parts[map.situacao]||'');
+      const sitNorm = normalizeSituacao(sitRaw);
+      if(sitRaw && sitRaw !== sitNorm && !Object.values(SIT_MAP).some(s=>s.label.toLowerCase()===sitRaw.toLowerCase())) warnings++;
+    }
+    if(hasError) errors++;
+    else if(isDup) dups++;
+    else valid++;
+  });
+
+  let html = `<div class="imp-preview">`;
+  // Stats
+  html += `<div class="imp-stats">
+    <div class="imp-stat ok"><div class="imp-stat-val">${valid}</div><div class="imp-stat-lbl">✅ Válidos</div></div>
+    <div class="imp-stat err"><div class="imp-stat-val">${errors}</div><div class="imp-stat-lbl">❌ Erros</div></div>
+    <div class="imp-stat warn"><div class="imp-stat-val">${dups}</div><div class="imp-stat-lbl">🔄 Duplicados</div></div>
+    <div class="imp-stat info"><div class="imp-stat-val">${mappedCount}/${totalHeaders}</div><div class="imp-stat-lbl">📊 Colunas Mapeadas</div></div>
+  </div>`;
+
+  // Column mapping display
+  html += `<div style="font-size:10px;font-weight:600;color:var(--c-text3);margin-bottom:4px;font-family:var(--font-mono)">MAPEAMENTO DE COLUNAS:</div>`;
+  html += `<div class="imp-col-map">`;
+  headers.forEach((h,i)=>{
+    const field = Object.entries(map).find(([f,idx])=>idx===i);
+    const mappedField = field ? field[0] : null;
+    const score = mappedField ? scores[mappedField] : 0;
+    const colDef = mappedField ? COLS.find(c=>c.f===mappedField) : null;
+    const label = colDef ? colDef.l : mappedField || '—';
+    const isSit = mappedField === 'situacao';
+    html += `<div class="imp-col-item ${mappedField?'mapped':'unmapped'}">
+      <span class="imp-col-src" title="${h}">${h}</span>
+      <span class="imp-col-arrow">→</span>
+      <span class="imp-col-dst ${mappedField?'':'none'}">${mappedField ? label : 'Ignorada'}${isSit?' 🎯':''}</span>
+      ${score>0?`<span class="imp-val-badge ${score>=80?'imp-val-ok':score>=40?'imp-val-warn':'imp-val-err'}">${score}%</span>`:''}
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Situação mapping info (if detected)
+  if(map.situacao !== undefined){
+    const sitSamples = {};
+    dataRows.slice(0,50).forEach(parts => {
+      const raw = String(parts[map.situacao]||'').trim();
+      if(raw){
+        const norm = normalizeSituacao(raw);
+        const info = getSitInfo(norm);
+        if(!sitSamples[raw]) sitSamples[raw] = {norm, info, count:0};
+        sitSamples[raw].count++;
+      }
+    });
+    if(Object.keys(sitSamples).length > 0){
+      html += `<div style="font-size:10px;font-weight:600;color:var(--c-gold);margin:8px 0 4px;font-family:var(--font-mono)">⚡ MAPEAMENTO DE SITUAÇÃO DETECTADO:</div>`;
+      html += `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">`;
+      Object.entries(sitSamples).forEach(([raw,{norm,info,count}])=>{
+        html += `<div style="display:flex;align-items:center;gap:4px;padding:3px 8px;background:var(--c-surface2);border:1px solid var(--c-border);border-radius:var(--r);font-size:9px;font-family:var(--font-mono)">
+          <span style="color:var(--c-text3)">"${raw}"</span>
+          <span style="color:var(--c-text3)">→</span>
+          <span class="sit-dot ${info.dot}" style="width:6px;height:6px"></span>
+          <span style="color:${info.color};font-weight:600">${info.code} – ${info.label}</span>
+          <span style="color:var(--c-text3)">(${count}x)</span>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+  }
+
+  // Preview table (first 8 rows)
+  const previewRows = dataRows.filter(r=>r&&r.join('').trim()).slice(0,8);
+  if(previewRows.length > 0){
+    html += `<div style="font-size:10px;font-weight:600;color:var(--c-text3);margin-bottom:4px;font-family:var(--font-mono)">PRÉVIA DOS DADOS (${Math.min(8,dataRows.length)} de ${dataRows.length} linhas):</div>`;
+    html += `<table class="imp-preview-table"><thead><tr>`;
+    headers.forEach(h => html += `<th>${h}</th>`);
+    html += `</tr></thead><tbody>`;
+    previewRows.forEach(row => {
+      const cnpjIdx = map.cnpj;
+      let cls = '';
+      if(cnpjIdx !== undefined){
+        const c = String(row[cnpjIdx]||'').replace(/\D/g,'');
+        if(c.length >= 11 && !validarCNPJ(c)) cls = 'row-error';
+        if(tipo==='db' && c && ST.fornecedores.find(f=>f.cnpj.replace(/\D/g,'')===c)) cls = 'row-dup';
+      }
+      html += `<tr class="${cls}">`;
+      row.forEach((cell,ci) => {
+        let cellStr = String(cell||'');
+        // Highlight situação cells
+        if(ci === map.situacao && cellStr){
+          const sitNorm = normalizeSituacao(cellStr);
+          const sitInfo = getSitInfo(sitNorm);
+          cellStr = `<span class="sit-dot ${sitInfo.dot}" style="width:5px;height:5px;display:inline-block;margin-right:3px"></span>${cellStr}`;
+        }
+        // Highlight CNPJ validity
+        if(ci === cnpjIdx && cellStr){
+          const c = cellStr.replace(/\D/g,'');
+          if(c.length >= 11){
+            cellStr = validarCNPJ(c)
+              ? `<span style="color:var(--c-green)">${cellStr}</span>`
+              : `<span style="color:var(--c-red)">${cellStr} ⚠</span>`;
+          }
+        }
+        html += `<td>${cellStr}</td>`;
+      });
+      html += `</tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+
+  html += `<div class="imp-progress"><div class="imp-progress-bar" id="${containerId}Bar"></div></div>`;
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+function impDB(files){
+  if(!ensureEmpresaAtiva('importar o banco da empresa'))return;
+  if(!files||!files[0])return;
+  const file = files[0];
+  const ext = file.name.split('.').pop().toLowerCase();
+  document.getElementById('dbFileInfo').textContent = `📄 ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+  addLog('logDB',`📂 ${file.name} [${ext.toUpperCase()}]`,'info');
+
+  readFileUniversal(file, (rows, fileExt, error) => {
+    if(error){addLog('logDB','❌ '+error,'err');return}
+    if(!rows||!rows.length){addLog('logDB','❌ Arquivo vazio','err');return}
+
+    const firstRow = rows[0].map(c=>String(c||''));
+    const colResult = detectColIndex(firstRow);
+    const {map, scores} = colResult;
+    const temCabecalho = Object.keys(map).length >= 2;
+    const dataRows = temCabecalho ? rows.slice(1) : rows;
+
+    addLog('logDB',temCabecalho
+      ? `✅ Cabeçalho detectado: ${Object.keys(map).length} colunas mapeadas`
+      : 'ℹ️ Sem cabeçalho — usando ordem padrão','info');
+
+    if(map.situacao !== undefined){
+      addLog('logDB','🎯 Coluna SITUAÇÃO detectada — mapeamento inteligente ativo','ok');
+    }
+
+    // Show preview
+    renderImportPreview('dbImportPreview', temCabecalho ? firstRow : firstRow.map((_,i)=>`Col ${i+1}`), colResult, dataRows, 'db');
+
+    // Progress bar
+    const bar = document.getElementById('dbImportPreviewBar');
+
+    let cnt=0,skip=0,errCnt=0;
+    const total = dataRows.filter(p=>p&&p.join('').trim()).length;
+
+    dataRows.forEach((parts,idx)=>{
       if(!parts||!parts.join('').trim())return;
       let cnpj,razao,uf,municipio,endereco,situacao,acumulador,cfop;
-      if(temCabecalho&&Object.keys(colMap).length>=2){
-        cnpj=(parts[colMap.cnpj]||'').replace(/\D/g,'');
-        razao=(parts[colMap.razao]||'').trim();
-        uf=(parts[colMap.uf]||'SP').trim();
-        municipio=(parts[colMap.municipio]||'').trim();
-        endereco=(parts[colMap.endereco]||'').trim();
-        const sitRaw=(parts[colMap.situacao]||'0').trim();
-        situacao=sitRaw==='Regular'||sitRaw==='regular'?'0':sitRaw==='Cancelada'||sitRaw==='cancelada'?'2':sitRaw;
-        acumulador=(parts[colMap.acumulador]||'101').trim();
-        cfop=(parts[colMap.cfop]||'1933').trim();
+      if(temCabecalho&&Object.keys(map).length>=2){
+        cnpj=String(parts[map.cnpj]||'').replace(/\D/g,'');
+        razao=String(parts[map.razao]||'').trim();
+        uf=String(parts[map.uf]||'SP').trim().toUpperCase();
+        municipio=String(parts[map.municipio]||'').trim().toUpperCase();
+        endereco=String(parts[map.endereco]||'').trim();
+        // SITUAÇÃO: normalização inteligente
+        const sitRaw=String(parts[map.situacao]||'0').trim();
+        situacao=normalizeSituacao(sitRaw);
+        acumulador=String(parts[map.acumulador]||'101').trim();
+        cfop=String(parts[map.cfop]||'1933').trim();
       } else {
-        [cnpj='',razao='',uf='SP',municipio='',endereco='',situacao='0',acumulador='101',cfop='1933']=parts.map(p=>p||'');
+        [cnpj='',razao='',uf='SP',municipio='',endereco='',situacao='0',acumulador='101',cfop='1933']=parts.map(p=>String(p||''));
         cnpj=cnpj.replace(/\D/g,'');
-        if(situacao==='Regular')situacao='0';if(situacao==='Cancelada')situacao='2';
+        situacao=normalizeSituacao(situacao);
+        uf=uf.toUpperCase();
+        municipio=municipio.toUpperCase();
       }
       if(!cnpj||!razao){skip++;return}
-      if(ST.fornecedores.find(f=>f.cnpj===cnpj)){skip++;return}
+      // CNPJ validation
+      if(cnpj.length>=11 && !validarCNPJ(cnpj)){
+        addLog('logDB',`⚠️ CNPJ inválido: ${fmtCNPJ(cnpj)} — ${razao} (importado com aviso)`,'warn');
+        errCnt++;
+      }
+      if(ST.fornecedores.find(f=>f.cnpj.replace(/\D/g,'')===cnpj)){skip++;return}
       ST.fornecedores.push({id:Date.now()+cnt,cnpj,razao,uf,municipio,endereco,situacao,acumulador,cfop});cnt++;
+
+      // Update progress
+      if(bar){bar.style.width=Math.round(((idx+1)/total)*100)+'%'}
     });
-    S.set('sc3_fornecedores',ST.fornecedores);renderDB();renderSB();
-    addLog('logDB',`✅ ${cnt} importados, ${skip} ignorados/duplicados`,'ok');
-    toast(`${cnt} fornecedores importados`,'ok');
-  };
-  reader.readAsText(files[0],'utf-8');
+    saveEmpresaContext();renderDB();renderSB();
+    addLog('logDB',`✅ ${cnt} importados | ${skip} duplicados/ignorados | ${errCnt} com CNPJ inválido`,'ok');
+    if(map.situacao !== undefined){
+      const sitStats = {};
+      ST.fornecedores.slice(-cnt).forEach(f=>{
+        const info = getSitInfo(f.situacao);
+        sitStats[info.label] = (sitStats[info.label]||0)+1;
+      });
+      const sitSummary = Object.entries(sitStats).map(([l,c])=>`${l}: ${c}`).join(' | ');
+      addLog('logDB',`📊 Situações: ${sitSummary}`,'info');
+    }
+    toast(`${cnt} fornecedores importados de ${file.name}`,'ok');
+    if(bar){bar.style.width='100%';bar.style.background='var(--c-green)'}
+  });
 }
 
 function impOP(files){
+  if(!ensureEmpresaAtiva('importar o operacional'))return;
   if(!files||!files[0])return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const rows=parseCSV(e.target.result);
-    if(!rows.length){addLog('logOP','❌ Arquivo vazio','err');return}
-    addLog('logOP',`📂 ${files[0].name}`,'info');
+  const file = files[0];
+  const ext = file.name.split('.').pop().toLowerCase();
+  document.getElementById('opFileInfo').textContent = `📄 ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+  addLog('logOP',`📂 ${file.name} [${ext.toUpperCase()}]`,'info');
 
-    const firstRow=rows[0];
-    const colMap=detectColIndex(firstRow);
-    const temCab=Object.keys(colMap).length>=3;
-    const dataRows=temCab?rows.slice(1):rows;
-    addLog('logOP',temCab?`✅ Cabeçalho detectado (${Object.keys(colMap).length} colunas mapeadas)`:'ℹ️ Sem cabeçalho','info');
+  readFileUniversal(file, (rows, fileExt, error) => {
+    if(error){addLog('logOP','❌ '+error,'err');return}
+    if(!rows||!rows.length){addLog('logOP','❌ Arquivo vazio','err');return}
 
+    const firstRow = rows[0].map(c=>String(c||''));
+    const colResult = detectColIndex(firstRow);
+    const {map, scores} = colResult;
+    const temCab = Object.keys(map).length >= 3;
+    const dataRows = temCab ? rows.slice(1) : rows;
+
+    addLog('logOP',temCab
+      ? `✅ Cabeçalho detectado: ${Object.keys(map).length} colunas mapeadas`
+      : 'ℹ️ Sem cabeçalho','info');
+
+    if(map.situacao !== undefined){
+      addLog('logOP','🎯 Coluna SITUAÇÃO detectada na posição '+(map.situacao+1)+' — normalização inteligente ativa','ok');
+    }
+    if(map.data !== undefined){
+      addLog('logOP','📅 Coluna DATA detectada — parser inteligente (dd/mm/yyyy, yyyy-mm-dd, serial Excel)','info');
+    }
+
+    // Show preview
+    renderImportPreview('opImportPreview', temCab ? firstRow : firstRow.map((_,i)=>`Col ${i+1}`), colResult, dataRows, 'op');
+
+    const bar = document.getElementById('opImportPreviewBar');
     const arr=getLinhas(ST.mes);
-    let cnt=0;
-    dataRows.forEach(parts=>{
+    let cnt=0, sitStats={}, dateFixed=0, numFixed=0;
+    const numFields = ['vlrServicos','vlrDescontos','vlrContabil','baseCalculo','aliquotaISS','vlrISSNormal','vlrISSRetido','vlrIRRF','vlrPIS','vlrCOFINS','vlrCSLL','vlrCRF','vlrINSS'];
+    const total = dataRows.filter(p=>p&&p.join('').trim()).length;
+
+    dataRows.forEach((parts,idx)=>{
       if(!parts||!parts.join('').trim())return;
       const l=newLinha();
       if(temCab){
-        Object.entries(colMap).forEach(([field,idx])=>{
-          if(field in l)l[field]=(parts[idx]||'').trim();
+        Object.entries(map).forEach(([field,colIdx])=>{
+          if(field in l){
+            let val = String(parts[colIdx]||'').trim();
+            // Smart processing by field type
+            if(field === 'situacao'){
+              val = normalizeSituacao(val);
+              const info = getSitInfo(val);
+              sitStats[info.label] = (sitStats[info.label]||0)+1;
+            } else if(field === 'data'){
+              const parsed = smartParseDate(val);
+              if(parsed !== val) dateFixed++;
+              val = parsed;
+            } else if(numFields.includes(field)){
+              const parsed = smartParseNumber(val);
+              if(parsed !== val) numFixed++;
+              val = parsed;
+            } else if(field === 'retencao'){
+              val = val.toLowerCase();
+              val = (val==='sim'||val==='s'||val==='yes'||val==='y'||val==='1'||val==='true'||val==='x') ? 'sim' : 'nao';
+            } else if(field === 'uf'){
+              val = val.toUpperCase().substring(0,2);
+            } else if(field === 'municipio'){
+              val = val.toUpperCase();
+            }
+            l[field]=val;
+          }
         });
       } else {
-        // Ordem padrão: cnpj,razao,uf,municipio,endereco,nDoc,serie,data,situacao,acumulador,cfop,vlrServicos,...
         const fields=['cnpj','razao','uf','municipio','endereco','nDoc','serie','data','situacao','acumulador','cfop','vlrServicos','vlrDescontos','vlrContabil','baseCalculo','aliquotaISS','vlrISSNormal','vlrISSRetido','vlrIRRF','vlrPIS','vlrCOFINS','vlrCSLL','vlrCRF','vlrINSS'];
-        fields.forEach((f,i)=>{if(parts[i]!==undefined)l[f]=(parts[i]||'').trim()});
+        fields.forEach((f,i)=>{
+          if(parts[i]!==undefined){
+            let val=String(parts[i]||'').trim();
+            if(f==='situacao') val=normalizeSituacao(val);
+            else if(f==='data') val=smartParseDate(val);
+            else if(numFields.includes(f)) val=smartParseNumber(val);
+            l[f]=val;
+          }
+        });
       }
       if(!l.cnpj&&!l.nDoc)return;
       l.cnpj=l.cnpj.replace(/\D/g,'');
+      // Auto-calc contabil/base if not set
+      if(!l.vlrContabil || l.vlrContabil==='0,00'){
+        const s=toN(l.vlrServicos),d=toN(l.vlrDescontos);
+        l.vlrContabil=fmtN(Math.max(0,s-d));
+        l.baseCalculo=l.vlrContabil;
+      }
+      // Auto-detect retenção from values
+      const retTotal = toN(l.vlrISSRetido)+toN(l.vlrIRRF)+toN(l.vlrPIS)+toN(l.vlrCOFINS)+toN(l.vlrCSLL)+toN(l.vlrINSS);
+      if(retTotal > 0 && l.retencao === 'nao') l.retencao = 'sim';
       // Auto-fill do banco
-      const f=findForn(l.cnpj);if(f&&!l.razao)applyForn(l,f);
+      const f=findForn(l.cnpj);
+      if(f){
+        if(!l.razao)l.razao=f.razao;
+        if(!l.uf)l.uf=f.uf;
+        if(!l.municipio)l.municipio=f.municipio;
+        if(!l.endereco)l.endereco=f.endereco;
+        if(!l.acumulador)l.acumulador=f.acumulador;
+        if(!l.cfop)l.cfop=f.cfop;
+      }
       arr.push(l);cnt++;
+      if(bar){bar.style.width=Math.round(((idx+1)/total)*100)+'%'}
     });
     setLinhas(ST.mes,arr);renderSheet();renderMeses();
-    addLog('logOP',`✅ ${cnt} notas importadas`,'ok');
-    toast(`${cnt} notas importadas em ${ST.mes}`,'ok');
-  };
-  reader.readAsText(files[0],'utf-8');
+
+    // Log situação stats
+    if(Object.keys(sitStats).length > 0){
+      const sitSummary = Object.entries(sitStats).map(([l,c])=>`${l}: ${c}`).join(' | ');
+      addLog('logOP',`📊 Situações detectadas: ${sitSummary}`,'info');
+    }
+    if(dateFixed > 0) addLog('logOP',`📅 ${dateFixed} datas convertidas automaticamente`,'info');
+    if(numFixed > 0) addLog('logOP',`🔢 ${numFixed} valores numéricos normalizados`,'info');
+
+    addLog('logOP',`✅ ${cnt} notas importadas em ${ST.mes}`,'ok');
+    toast(`${cnt} notas importadas de ${file.name} em ${ST.mes}`,'ok');
+    if(bar){bar.style.width='100%';bar.style.background='var(--c-green)'}
+  });
 }
 
 function dzOver(e,id){e.preventDefault();document.getElementById(id).classList.add('over')}
@@ -1540,28 +2186,31 @@ function addLog(id,msg,cls=''){
 }
 
 function processarColarCSV(){
+  if(!ensureEmpresaAtiva('importar fornecedores'))return;
   const txt=document.getElementById('csvPaste').value.trim();
   if(!txt){toast('Cole o CSV primeiro','err');return}
   const rows=parseCSV(txt);
-  const colMap=detectColIndex(rows[0]||[]);
-  const temCab=Object.keys(colMap).length>=2;
+  const colResult=detectColIndex(rows[0]||[]);
+  const {map}=colResult;
+  const temCab=Object.keys(map).length>=2;
   const data=temCab?rows.slice(1):rows;
   let n=0;
   data.forEach(p=>{
-    const cnpj=(p[colMap.cnpj!=null?colMap.cnpj:0]||'').replace(/\D/g,'');
-    const razao=(p[colMap.razao!=null?colMap.razao:1]||'').trim();
-    if(!cnpj||!razao||ST.fornecedores.find(f=>f.cnpj===cnpj))return;
+    const cnpj=(String(p[map.cnpj!=null?map.cnpj:0]||'')).replace(/\D/g,'');
+    const razao=(String(p[map.razao!=null?map.razao:1]||'')).trim();
+    if(!cnpj||!razao||ST.fornecedores.find(f=>f.cnpj.replace(/\D/g,'')===cnpj))return;
+    const sitRaw=String(p[map.situacao!=null?map.situacao:5]||'0').trim();
     ST.fornecedores.push({
       id:Date.now()+n,cnpj,razao,
-      uf:(p[colMap.uf!=null?colMap.uf:2]||'SP').trim(),
-      municipio:(p[colMap.municipio!=null?colMap.municipio:3]||'').trim(),
-      endereco:(p[colMap.endereco!=null?colMap.endereco:4]||'').trim(),
-      situacao:(p[colMap.situacao!=null?colMap.situacao:5]||'0').replace('Regular','0').replace('Cancelada','2').trim(),
-      acumulador:(p[colMap.acumulador!=null?colMap.acumulador:6]||'101').trim(),
-      cfop:(p[colMap.cfop!=null?colMap.cfop:7]||'1933').trim()
+      uf:(String(p[map.uf!=null?map.uf:2]||'SP')).trim().toUpperCase(),
+      municipio:(String(p[map.municipio!=null?map.municipio:3]||'')).trim().toUpperCase(),
+      endereco:(String(p[map.endereco!=null?map.endereco:4]||'')).trim(),
+      situacao:normalizeSituacao(sitRaw),
+      acumulador:(String(p[map.acumulador!=null?map.acumulador:6]||'101')).trim(),
+      cfop:(String(p[map.cfop!=null?map.cfop:7]||'1933')).trim()
     });n++;
   });
-  S.set('sc3_fornecedores',ST.fornecedores);renderDB();renderSB();
+  saveEmpresaContext();renderDB();renderSB();
   closeModal('mColarCSV');toast(`${n} fornecedores importados`,'ok');
 }
 
@@ -1582,9 +2231,13 @@ function exportCSV(){
 }
 
 function exportBD(){
-  const h=['CNPJ','Razão Social','UF','Município','Endereço','Situação','Acumulador','CFOP'];
+  if(!ensureEmpresaAtiva('exportar o banco da empresa'))return;
+  const h=['CNPJ','Razão Social','UF','Município','Endereço','Situação','Cod.Situação','Acumulador','CFOP'];
   const rows=[h.join(';')];
-  ST.fornecedores.forEach(f=>rows.push([f.cnpj,f.razao,f.uf,f.municipio,f.endereco||'',f.situacao==='0'?'Regular':'Cancelada',f.acumulador,f.cfop].map(v=>`"${v}"`).join(';')));
+  ST.fornecedores.forEach(f=>{
+    const sit=getSitInfo(f.situacao);
+    rows.push([f.cnpj,f.razao,f.uf,f.municipio,f.endereco||'',sit.label,sit.code,f.acumulador,f.cfop].map(v=>`"${v}"`).join(';'));
+  });
   dlCSV(rows.join('\n'),'fornecedores.csv');toast('BD exportado','ok');
 }
 
@@ -1613,7 +2266,7 @@ function exportarTXT(){
     txt+=`${'─'.repeat(80)}\n`;
     lns.forEach((l,i)=>{
       txt+=`  ${String(i+1).padStart(3,'0')}. CNPJ: ${fmtCNPJ(l.cnpj).padEnd(20)} | ${(l.razao||'').substring(0,35).padEnd(35)} | Nº ${(l.nDoc||'').padEnd(10)} | Vlr: R$ ${(l.vlrServicos||'0,00').padStart(12)} | Ret: ${l.retencao||'nao'}\n`;
-      txt+=`       UF:${l.uf||'--'} | Mun:${(l.municipio||'').substring(0,18).padEnd(18)} | Acum:${l.acumulador||''} | CFOP:${l.cfop||''} | Sit:${l.situacao||'0'}\n`;
+      txt+=`       UF:${l.uf||'--'} | Mun:${(l.municipio||'').substring(0,18).padEnd(18)} | Acum:${l.acumulador||''} | CFOP:${l.cfop||''} | Sit:${getSitInfo(l.situacao).label}\n`;
       if(toN(l.vlrISSRetido)+toN(l.vlrIRRF)+toN(l.vlrPIS)+toN(l.vlrCOFINS)+toN(l.vlrCSLL)+toN(l.vlrINSS)>0){
         txt+=`       RETENÇÕES — ISS:${l.vlrISSRetido||'0,00'} IRRF:${l.vlrIRRF||'0,00'} PIS:${l.vlrPIS||'0,00'} COFINS:${l.vlrCOFINS||'0,00'} CSLL:${l.vlrCSLL||'0,00'} INSS:${l.vlrINSS||'0,00'}\n`;
       }
@@ -1666,7 +2319,12 @@ function openApuracao(){
   const s={};nf.forEach(f=>s[f]=0);
   linhas.forEach(l=>nf.forEach(f=>s[f]+=toN(l[f])));
   const comRet=linhas.filter(l=>l.retencao==='sim').length;
-  const cancel=linhas.filter(l=>l.situacao==='2').length;
+  const cancel=linhas.filter(l=>normalizeSituacao(l.situacao)==='2').length;
+  const denegadas=linhas.filter(l=>normalizeSituacao(l.situacao)==='1').length;
+  const inutilizadas=linhas.filter(l=>normalizeSituacao(l.situacao)==='3').length;
+  const processamento=linhas.filter(l=>normalizeSituacao(l.situacao)==='4').length;
+  const pendentes=linhas.filter(l=>normalizeSituacao(l.situacao)==='5').length;
+  const regulares2=linhas.filter(l=>normalizeSituacao(l.situacao)==='0').length;
   const totImp=nf.filter(f=>!['vlrServicos','vlrDescontos','vlrContabil','baseCalculo'].includes(f)).reduce((a,f)=>a+s[f],0);
   const pct=s.vlrServicos>0?((totImp/s.vlrServicos)*100).toFixed(2):0;
 
@@ -1676,6 +2334,11 @@ function openApuracao(){
       <div class="ap-row"><span class="ap-l">Total de Notas</span><span class="ap-v">${linhas.length}</span></div>
       <div class="ap-row"><span class="ap-l">Notas com Retenção</span><span class="ap-v blue">${comRet}</span></div>
       <div class="ap-row"><span class="ap-l">Notas Canceladas</span><span class="ap-v red">${cancel}</span></div>
+      <div class="ap-row"><span class="ap-l">Notas Denegadas</span><span class="ap-v" style="color:var(--c-purple)">${denegadas}</span></div>
+      <div class="ap-row"><span class="ap-l">Notas Inutilizadas</span><span class="ap-v">${inutilizadas}</span></div>
+      <div class="ap-row"><span class="ap-l">Em Processamento</span><span class="ap-v" style="color:var(--c-gold)">${processamento}</span></div>
+      <div class="ap-row"><span class="ap-l">Pendentes</span><span class="ap-v" style="color:var(--c-cyan)">${pendentes}</span></div>
+      <div class="ap-row"><span class="ap-l">Regulares</span><span class="ap-v green">${regulares2}</span></div>
       <div class="ap-row"><span class="ap-l">Fornecedores Únicos</span><span class="ap-v">${new Set(linhas.map(l=>l.cnpj).filter(Boolean)).size}</span></div>
     </div>
     <div class="ap-sec">
@@ -1708,8 +2371,9 @@ function salvarEmpresa(){
   if(!n||!c){toast('Nome e CNPJ obrigatórios','err');return}
   const e={id:'e'+Date.now(),nome:n,cnpj:c,ie:document.getElementById('ne_i').value,municipio:document.getElementById('ne_m').value,uf:document.getElementById('ne_u').value};
   ST.empresas.push(e);ST.ea=e;
-  S.set('sc3_empresas',ST.empresas);S.set('sc3_ea',e);
-  renderSB();closeModal('mEmpresaNova');toast('Empresa criada','ok');
+  loadEmpresaContext();
+  S.set('sc3_empresas',ST.empresas);S.set('sc3_ea',e);saveEmpresaContext();
+  renderSB();renderMeses();nav(ST.viewAtual);closeModal('mEmpresaNova');toast('Empresa criada','ok');
 }
 
 function renderEmpGrid(){
@@ -1719,7 +2383,7 @@ function renderEmpGrid(){
     d.className='emp-card'+(e.id===ST.ea?.id?' sel':'');
     const notas=ALL_MESES.reduce((a,m)=>a+(ST.op[`${e.id}_${m}`]||[]).length,0);
     d.innerHTML=`<div class="emp-card-n">${e.nome}</div><div class="emp-card-c">${e.cnpj}</div><div class="emp-card-s">${notas} notas lançadas</div>`;
-    d.onclick=()=>{ST.ea=e;S.set('sc3_ea',e);closeModal('mEmpresa');renderSB();renderSheet();renderMeses();toast('Empresa: '+e.nome,'ok')};
+    d.onclick=()=>{ST.ea=e;loadEmpresaContext();S.set('sc3_ea',e);closeModal('mEmpresa');renderSB();renderMeses();nav(ST.viewAtual);toast('Empresa: '+e.nome,'ok')};
     g.appendChild(d);
   });
 }
@@ -1730,6 +2394,10 @@ function renderDash(){
   const totS=linhas.reduce((a,l)=>a+toN(l.vlrServicos),0);
   const totI=linhas.reduce((a,l)=>a+toN(l.vlrISSRetido)+toN(l.vlrIRRF)+toN(l.vlrPIS)+toN(l.vlrCOFINS)+toN(l.vlrCSLL)+toN(l.vlrINSS),0);
   const comRet=linhas.filter(l=>l.retencao==='sim').length;
+  const sitCounts = {};
+  linhas.forEach(l=>{const s=normalizeSituacao(l.situacao);sitCounts[s]=(sitCounts[s]||0)+1});
+  const canceladas = sitCounts['2']||0;
+  const regulares = sitCounts['0']||0;
 
   document.getElementById('kpiGrid').innerHTML=`
     <div class="kpi hl"><div class="kpi-icon">💰</div><div class="kpi-label">Total Serviços</div><div class="kpi-val">R$ ${fmtN(totS)}</div><div class="kpi-sub">${ST.mes}</div></div>
@@ -1737,6 +2405,17 @@ function renderDash(){
     <div class="kpi"><div class="kpi-icon">💸</div><div class="kpi-label">Impostos Apurados</div><div class="kpi-val">R$ ${fmtN(totI)}</div><div class="kpi-sub">${totS>0?((totI/totS)*100).toFixed(1):0}% sobre serviços</div></div>
     <div class="kpi"><div class="kpi-icon">🏭</div><div class="kpi-label">Fornecedores</div><div class="kpi-val">${ST.fornecedores.length}</div><div class="kpi-sub">Banco de dados</div></div>
   `;
+
+  // Situação resumo card
+  const sitHtml = Object.entries(SIT_MAP).map(([code, info])=>{
+    const count = sitCounts[code]||0;
+    if(count === 0 && code !== '0') return '';
+    return `<div style="display:flex;align-items:center;gap:6px;padding:3px 0">
+      <span class="sit-dot ${info.dot}" style="width:8px;height:8px"></span>
+      <span style="font-size:11px;flex:1">${info.label}</span>
+      <span style="font-family:var(--font-mono);font-size:11px;font-weight:600;color:${info.color}">${count}</span>
+    </div>`;
+  }).filter(Boolean).join('');
 
   // Gráfico barras
   const bEl=document.getElementById('chartBars');bEl.innerHTML='';
@@ -1775,14 +2454,15 @@ function renderDash(){
   document.getElementById('impPanel').innerHTML=imp.map(x=>{
     const v=linhas.reduce((a,l)=>a+toN(l[x.f]),0);
     return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--c-border)"><span style="font-size:11px">${x.l}</span><span style="font-family:var(--font-mono);font-size:11px;color:${v>0?'var(--c-red)':'var(--c-text3)'}">R$ ${fmtN(v)}</span></div>`;
-  }).join('');
+  }).join('') + `<div style="margin-top:10px;border-top:1px solid var(--c-border2);padding-top:8px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--c-text3);margin-bottom:6px;font-family:var(--font-mono)">📊 Situação das Notas</div>${sitHtml||'<span style="color:var(--c-text3);font-size:11px">Nenhuma nota</span>'}</div>`;
 }
 
 // ─── CORREIO FISCAL ────────────────────────────────────────────────────────────
 function conectarCorreio(){
+  if(!ensureEmpresaAtiva('configurar o correio fiscal'))return;
   const email=document.getElementById('corrEmail').value.trim();
   if(!email||!email.includes('@')){toast('Email inválido','err');return}
-  ST.corrEmail=email;S.set('sc3_corrEmail',email);
+  ST.corrEmail=email;saveEmpresaContext();
   const s=document.getElementById('corrStatus');
   s.className='cc-status loading';s.textContent='Conectando...';
   setTimeout(()=>{
@@ -1792,6 +2472,7 @@ function conectarCorreio(){
 }
 
 function simularRecebimento(){
+  if(!ensureEmpresaAtiva('usar o correio fiscal'))return;
   const email=ST.corrEmail||document.getElementById('corrEmail').value;
   if(!email){toast('Configure o email primeiro','err');return}
   const d=hoje();
@@ -1801,7 +2482,7 @@ function simularRecebimento(){
     {id:'c'+(Date.now()+1),de:'contato@fornecedor.com.br',assunto:'CORREIO - Notas Fiscais Fevereiro',data:d,hora:new Date().toLocaleTimeString('pt-BR'),preview:'Encaminho as notas do mês conforme solicitado.',lido:false,anexos:['NF_5678.xml']},
   ];
   ST.correio[d].push(...simulados);
-  S.set('sc3_correio',ST.correio);
+  saveEmpresaContext();
   renderCorreio();
   const total=Object.values(ST.correio).flat().length;
   const badge=document.getElementById('correioCount');
@@ -1810,14 +2491,21 @@ function simularRecebimento(){
 }
 
 function limparCorreio(){
+  if(!ensureEmpresaAtiva('limpar o correio fiscal'))return;
   if(!confirm('Limpar todo o correio fiscal?'))return;
-  ST.correio={};S.set('sc3_correio',ST.correio);renderCorreio();
+  ST.correio={};saveEmpresaContext();renderCorreio();
   document.getElementById('correioCount').style.display='none';
   toast('Correio limpo','warn');
 }
 
 let pastaAtiva=null;
 function renderCorreio(){
+  if(!hasEmpresaAtiva()){
+    document.getElementById('pastasLista').innerHTML='<div style="padding:12px;color:var(--c-text3);font-size:11px">Selecione uma empresa para acessar o correio.</div>';
+    document.getElementById('correioMain').innerHTML='<div class="correio-empty"><div class="correio-empty-icon">🏢</div><div>Selecione uma empresa</div></div>';
+    document.getElementById('correioCount').style.display='none';
+    return;
+  }
   const pastas=Object.keys(ST.correio).sort().reverse();
   const plEl=document.getElementById('pastasLista');plEl.innerHTML='';
   if(!pastas.length){
@@ -1854,7 +2542,7 @@ function renderEmailsDir(data){
       <div class="email-preview">${email.preview}</div>
       ${email.anexos?.length?`<div class="email-attachments">${email.anexos.map(a=>`<div class="att-chip">📎 ${a}</div>`).join('')}</div>`:''}
     `;
-    card.onclick=()=>{email.lido=true;S.set('sc3_correio',ST.correio);renderCorreio()};
+    card.onclick=()=>{email.lido=true;saveEmpresaContext();renderCorreio()};
     el.appendChild(card);
   });
 }
@@ -2008,6 +2696,7 @@ function selecionarTodosXML(){
 }
 
 function transferirXMLsParaOp(){
+  if(!ensureEmpresaAtiva('transferir XML para o operacional'))return;
   const sel=ST.xmlNotas.filter(n=>n.selecionado);
   if(!sel.length){toast('Selecione ao menos um XML','warn');return}
   if(!confirm(`Transferir ${sel.length} nota(s) para o operacional de ${ST.mes}?`))return;
